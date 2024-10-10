@@ -1,0 +1,17 @@
+name: gpu-env
+channels:
+  - nvidia 
+  - conda-forge
+  - rapidsai
+  - defaults
+
+dependencies:
+  - python
+  - cudf
+  - cugraph 
+  - pygraphblas  # PyGraphBLAS from conda-forge
+  - ipykernel
+  - pygraphviz
+  - pip
+  - pip:
+      - pygraphblas  # Ensures latest pygraphblas is installed via pip (if not in conda)

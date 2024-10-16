@@ -27,7 +27,7 @@ conda env create -f environment.yml
 conda activate gpu-env
 ```
 
-## Calling from Prolog
+## Calling from SWI-Prolog
 
 As an example, the following clauses in the test.pl file describe rows in a boolean matrix, we show how to use BMLP-GPU to compute its transitive closure.
 ```

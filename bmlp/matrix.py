@@ -1,4 +1,6 @@
 import pygraphblas as gb
+import numpy as np
+from .utils import *
 
 # Use python wrapper of GraphBLAS on GPU (BLAS - Basic Linear Algebra Subprograms)
 # GraphBLAS supports graph operations via linear algebraic methods (e.g. matrix multiplication) over various semirings
@@ -30,12 +32,46 @@ import pygraphblas as gb
 # A <= B	Compare Element-Wise Union	type default LE operator
 # A >= B	Compare Element-Wise Union	type default GE operator
 
+
+# Write graphBLAS matrix as a set of integers in a prolog file
+def boolean_matrix_to_integers(matrix, name, path):
+    
+    with open(path, 'w') as prolog:
+        for i in range(0, matrix.nrows):
+            
+            out = 0
+            for j in range(matrix.ncols - 1, -1, -1):
+                
+                # sparse matrix elements can be empty bits
+                element = matrix.get(i, j)
+                out = (out << 1) | element if element else (out << 1)
+                
+            prolog.write('%s(%s).\n' % (name, out))
+
+
+# From a path to a prolog file containing a boolean matrix
+# convert it into a graphBLAS matrix for computation
+def integers_to_boolean_matrix(path):
+    
+    bitcodes, dim = parse_prolog_binary_codes(path)
+    matrix = gb.Matrix.sparse(gb.BOOL, dim, dim)
+    
+    
+    for row in range(0, len(bitcodes)):
+        for col in range(0, len(bitcodes[row])):
+            if bitcodes[row][col]:
+                matrix[row, col] = True
+    
+    return matrix
+    
+
 # Create an identity matrix
 def identity(dim):
     I = gb.Matrix.sparse(gb.BOOL, dim, dim)
     for i in range(dim):
         I[i, i] = True
     return I
+
 
 # GraphBLAS version of BMLP-RMS algorithm which performs repeated matrix squaring
 def BMLP_RMS(R1, print_matrix=False):
@@ -63,6 +99,7 @@ def BMLP_RMS(R1, print_matrix=False):
 
     # Multiply to remove redundant diagonal elements
     return R_ @ R1
+
 
 # GraphBLAS version of BMLP-SMP algorithm which performs vector multiplication
 def BMLP_SMP(V, R1, print_matrix=False):

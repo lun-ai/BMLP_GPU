@@ -46,7 +46,7 @@ def boolean_matrix_to_integers(matrix, name, path):
                 element = matrix.get(i, j)
                 out = (out << 1) | element if element else (out << 1)
                 
-            prolog.write('%s(%s).\n' % (name, out))
+            prolog.write('%s(%s,%s).\n' % (name, i, out))
 
 
 # From a path to a prolog file containing a boolean matrix
@@ -56,9 +56,9 @@ def integers_to_boolean_matrix(path):
     bitcodes, dim = parse_prolog_binary_codes(path)
     matrix = gb.Matrix.sparse(gb.BOOL, dim, dim)
     
-    
     for row in range(0, len(bitcodes)):
         for col in range(0, len(bitcodes[row])):
+            
             if bitcodes[row][col]:
                 matrix[row, col] = True
     

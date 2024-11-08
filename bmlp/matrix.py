@@ -1,6 +1,6 @@
 import pygraphblas as gb
 import numpy as np
-from .utils import *
+from bmlp.utils import *
 
 # Use python wrapper of GraphBLAS on GPU (BLAS - Basic Linear Algebra Subprograms)
 # GraphBLAS supports graph operations via linear algebraic methods (e.g. matrix multiplication) over various semirings
@@ -17,10 +17,12 @@ from .utils import *
 # A |= B	In-place Matrix Union	type default SECOND combiner
 # A & B	    Matrix Intersection	type default SECOND combiner
 # A &= B	In-place Matrix Intersection	type default SECOND combiner
+# The element-wise union performs the correct boolean operation on elements (None or BOOL)
 # A + B	    Matrix Element-Wise Union	type default PLUS combiner
 # A += B	In-place Matrix Element-Wise Union	type default PLUS combiner
 # A - B	    Matrix Element-Wise Union	type default MINUS combiner
 # A -= B	In-place Matrix Element-Wise Union	type default MINUS combiner
+# The element-wise intersection performs the correct boolean operation on elements (None or BOOL) with higher operator order 
 # A * B	    Matrix Element-Wise Intersection	type default TIMES combiner
 # A *= B	In-place Matrix Element-Wise Intersection	type default TIMES combiner
 # A / B	    Matrix Element-Wise Intersection	type default DIV combiner
@@ -73,17 +75,34 @@ def identity(dim):
     return I
 
 
-# GraphBLAS version of BMLP-RMS algorithm which performs repeated matrix squaring
-def BMLP_RMS(R1, print_matrix=False):
 
+def BMLP_RMS(P1, P2=None, print_matrix=False):
+    
+    """GraphBLAS version of BMLP-RMS algorithm which performs repeated matrix squaring
+
+        P0, P1 and P2 are boolean matrices representing the following predicates.
+        p0(X,Z):- p1(X,Z). 
+        p0(X,Z):- p2(X,Y),p0(Y,Z).
+
+        Default p1 and p2 represent the same predicate.
+
+    Args:
+        P1 (Matrix.sparse): boolean matrix for the non recursive body p1 or default both p1 and p2
+        P2 (Matrix.sparse, optional): boolean matrix for the recursive body p2 if differs from p1. Defaults to None.
+        print_matrix (bool, optional): print trace of fixpoint computation. Defaults to False.
+
+    Returns:
+        Matrix.sparse: fixpoint boolean matrix representing predicate p0
+    """
+    
     # the dimensions of the matrix, e.g. the number of nodes in a graph
-    dim = R1.nrows
+    dim = P1.nrows
     empty_matrix = gb.Matrix.sparse(gb.BOOL, dim, dim)
 
     # Add identy to the adjacency matrix
-    R = identity(dim) + R1
+    R = identity(dim) + P1 if P2 is None else identity(dim) + P2
     if print_matrix:
-        print('R = R1 + I = \n'+ str(R) + '\n')
+        print('R = R2 + I = \n'+ str(R) + '\n')
 
     # Iteratively compute the transitive closure using boolean matrix multiplication
     # Initialise closure matrix with an empty matrix
@@ -92,13 +111,18 @@ def BMLP_RMS(R1, print_matrix=False):
         # R = R x R until no new connections are found
         R_ = R @ R
         if print_matrix:
-            print('R2* = \n' + str(R_) + '\n')
+            print('fixpoint = \n' + str(R_) + '\n')
         if R_.iseq(R):
             break
         R = R_
 
     # Multiply to remove redundant diagonal elements
-    return R_ @ R1
+    res = R_ @ P1
+    
+    if print_matrix:
+        print('R0* = \n' + str(res) + '\n')
+    
+    return res
 
 
 # GraphBLAS version of BMLP-SMP algorithm which performs vector multiplication
@@ -109,6 +133,8 @@ def BMLP_SMP(V, R1, print_matrix=False):
     while True:
         # Apply vector mutiplication (selection) to the transitive closure
         V_ = V + V @ R1
+        if print_matrix:
+            print('V* = \n' + str(V_) + '\n')
         if V_.iseq(V):
             break
         V = V_

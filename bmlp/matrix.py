@@ -150,16 +150,16 @@ def BMLP_SMP(V, R1, print_matrix=False):
 
 
 def BMLP_IE(V, R1, R2, T=None, print_matrix=False):
-    """GraphBLAS version of BMLP-SMP algorithm 
+    """GraphBLAS version of BMLP-IE algorithm 
         which performs matrix operations using two input matrices
-        of dimension k x n
+        of dimension k x n.
 
     Args:
-        V (Vector.sparse): a 1 x 
-        R1 (Matrix.sparse): _description_
-        R2 (Matrix.sparse): _description_
-        T (Vector.sparse, optional): _description_. Defaults to None.
-        print_matrix (bool, optional): _description_. Defaults to False.
+        V (Vector.sparse): A 1 x n vector
+        R1 (Matrix.sparse): A k x n boolean matrix
+        R2 (Matrix.sparse): A k x n boolean matrix
+        T (Vector.sparse, optional): A 1 x k filter applied on R2. Defaults to None.
+        print_matrix (bool, optional): Print trace of fixpoint computation. Defaults to False.
 
     Returns:
         Matrix.sparse: _description_

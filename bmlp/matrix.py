@@ -162,20 +162,27 @@ def BMLP_IE(V, R1, R2, T=None, print_matrix=False):
         The input V is u rows of 1 x n vectors (a batch of u inputs).
 
     Args:
-        V (Vector.sparse): A matrix containing u 1 x n vectors
-        R1 (Matrix.sparse): A k x n boolean matrix
-        R2 (Matrix.sparse): A k x n boolean matrix
+        V (Vector.sparse): A matrix containing u 1 x n vectors.
+        R1 (Matrix.sparse): A k x n boolean matrix.
+        R2 (Matrix.sparse): A k x n boolean matrix.
         T (Vector.sparse, optional): A u x k filter applied on R2. Defaults to None.
         print_matrix (bool, optional): Print trace of fixpoint computation. Defaults to False.
 
     Returns:
-        Matrix.sparse: _description_
+        Matrix.sparse: V* transitive closure (fixpoint) containing u rows of 1 x n vectors.
     """
     nrows = R1.nrows
-    ncols = R1.ncols
+    ncols = max(R1.ncols, R2.ncols)
     ninputs = V.nrows
-    res = gb.Matrix.sparse(gb.BOOL, ninputs, ninputs, ncols)
+    R1.resize(nrows,ncols)
+    R2.resize(nrows,ncols)
+    V.resize(ninputs, ncols)
+    
+    res = gb.Matrix.sparse(gb.BOOL, ninputs, ncols)
     V_ = gb.Matrix.sparse(gb.BOOL, ninputs, nrows)
+    
+    if T is not None:
+        T.resize(ninputs,nrows)
     
     while True:
         # Find all rows that are subsets of V 
@@ -187,7 +194,11 @@ def BMLP_IE(V, R1, R2, T=None, print_matrix=False):
                     V_[i,j] = True
 
         # Multiply with rows in R2 filtered by T and update
-        res = V_ @ R2 + V if T is None else (V_ * T) @ R2 + V
+        res = V_ @ R2 + V if T is None else (V_ - T) @ R2 + V
+        
+        print(V_)
+        print(V_ - T)
+        
         if print_matrix:
             print('V* = \n' + str(res) + '\n')
         if res.iseq(V):

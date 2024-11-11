@@ -16,6 +16,19 @@ class BMLPTests(unittest.TestCase):
         self.assertEqual(a[3,0],True)
         self.assertEqual(a[4,4],True)
         
+    def test_load_pl_squared(self):
+        
+        # Test Prolog to BMLP-GPU conversion
+        # Load a .pl file containing rows of a boolean matrix
+        a = integers_to_boolean_matrix("bmlp/load_pl_test.pl", is_squared=True)
+        
+        self.assertEqual(a[0,1],True)
+        self.assertEqual(a[1,2],True)
+        self.assertEqual(a[2,3],True)
+        self.assertEqual(a[3,0],True)
+        self.assertEqual(a[4,4],True)
+        self.assertEqual(a.nrows,6)
+        
     def test_save_pl(self):
         
         # Test Prolog to BMLP-GPU conversion

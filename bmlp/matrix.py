@@ -53,10 +53,15 @@ def boolean_matrix_to_integers(matrix, name, path):
 
 # From a path to a prolog file containing a boolean matrix
 # convert it into a graphBLAS matrix for computation
-def integers_to_boolean_matrix(path):
+def integers_to_boolean_matrix(path, is_squared=False):
     
-    bitcodes, dim = parse_prolog_binary_codes(path)
-    matrix = gb.Matrix.sparse(gb.BOOL, dim, dim)
+    bitcodes, nrows, ncols = parse_prolog_binary_codes(path)
+    
+    if is_squared:
+        dim = max(nrows, ncols)
+        matrix = gb.Matrix.sparse(gb.BOOL, dim, dim)
+    else:
+        matrix = gb.Matrix.sparse(gb.BOOL, nrows, ncols)
     
     for row in range(0, len(bitcodes)):
         for col in range(0, len(bitcodes[row])):

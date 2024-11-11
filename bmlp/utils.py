@@ -17,7 +17,7 @@ def parse_prolog_binary_codes(path):
                 max_length = max(max_length, length)
                 num_facts += 1
             
-    return codes, max(max_length, num_facts)
+    return codes, num_facts, max_length, 
 
 def integer_to_binary_code(n):
     len = n.bit_length()

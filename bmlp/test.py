@@ -177,7 +177,83 @@ class BMLPTests(unittest.TestCase):
         self.assertEqual(res[1],True) 
         self.assertEqual(res[2],True) 
         self.assertEqual(res[3],True)
+        
+    def test_bmlp_ie(self):
+        
+        edges_1 = [(0, 0), (1, 1), (2, 2), (2, 3)]
+        edges_2 = [(0, 1), (1, 2), (1, 3), (2, 4)]
+        
+        num_rows = 3
+        num_cols = 5
+        
+        # Create the first matrix using BOOL type
+        R1 = gb.Matrix.sparse(gb.BOOL, num_rows, num_cols)
+        
+        # Create the second matrix using BOOL type
+        R2 = gb.Matrix.sparse(gb.BOOL, num_rows, num_cols)
+
+        # Insert edges into the first matrix
+        for src, dst in edges_1:
+            R1[src, dst] = True
+            
+        # Insert edges into the second matrix
+        for src, dst in edges_2:
+            R2[src, dst] = True
+            
+        # Create a vector to represent a query
+        V = gb.Vector.sparse(gb.BOOL, num_cols)
+
+        # query the reachability of node 1
+        V[0] = True
+        
+        res = BMLP_IE(V, R1, R2)
+        
+        self.assertEqual(res[0],True) 
+        self.assertEqual(res[1],True) 
+        self.assertEqual(res[2],True) 
+        self.assertEqual(res[3],True)
     
+    def test_bmlp_ie_filtering(self):
+        
+        edges_1 = [(0, 0), (1, 1), (2, 2), (2, 3)]
+        edges_2 = [(0, 1), (0, 2), (1, 2), (1, 3), (2, 4)]
+        
+        num_rows = 3
+        num_cols = 5
+        
+        # Create the first matrix using BOOL type
+        R1 = gb.Matrix.sparse(gb.BOOL, num_rows, num_cols)
+        
+        # Create the second matrix using BOOL type
+        R2 = gb.Matrix.sparse(gb.BOOL, num_rows, num_cols)
+
+        # Insert edges into the first matrix
+        for src, dst in edges_1:
+            R1[src, dst] = True
+            
+        # Insert edges into the second matrix
+        for src, dst in edges_2:
+            R2[src, dst] = True
+            
+        # Create a vector to represent a query
+        V = gb.Vector.sparse(gb.BOOL, num_cols)
+        # Create a vector to represent a filter on the second matrix
+        T = gb.Vector.sparse(gb.BOOL, num_rows)
+
+        # Query the reachability of node 3
+        V[0] = True
+        V[3] = True
+        # Filter the second row in the matrix
+        T[0] = True
+        T[2] = True
+        
+        res = BMLP_IE(V, R1, R2, T)
+        
+        self.assertEqual(res[0],True) 
+        self.assertEqual(res[1],True) 
+        self.assertEqual(res[2],True) 
+        self.assertEqual(res[3],True)
+        self.assertEqual(res[4],True)
 
 if __name__ == '__main__':
     unittest.main()

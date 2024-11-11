@@ -131,7 +131,7 @@ def BMLP_SMP(V, R1, print_matrix=False):
     # Push the model subset selection into the summation for improved performance
     V_ = V
     while True:
-        # Apply vector mutiplication (selection) to the transitive closure
+        # Apply vector multiplication (selection) to the transitive closure
         V_ = V + V @ R1
         if print_matrix:
             print('V* = \n' + str(V_) + '\n')
@@ -139,5 +139,39 @@ def BMLP_SMP(V, R1, print_matrix=False):
             break
         V = V_
     
+    # Multiply to remove redundant diagonal elements
+    res = V_ @ R1
+    
+    if print_matrix:
+        print('V* = \n' + str(res) + '\n')
+    
     # Multiple to remove redundant elements
-    return V_ @ R1
+    return res
+
+
+# GraphBLAS version of BMLP-SMP algorithm which performs matrix operations using two input matrices
+def BMLP_IE(V, R1, R2, T=None, print_matrix=False):
+    
+    nrows = R1.nrows
+    res = V
+    V_ = gb.Vector.sparse(gb.BOOL, nrows)
+    
+    while True:
+        # Find all rows that are subsets of V 
+        for i in range(nrows):
+            row = R1[i,:]
+            if row.iseq(V * row):
+                V_[i] = True
+
+        # Multiply with rows in R2 filtered by T and update
+        res = V_ @ R2 + V if T is None else (V_ * T) @ R2 + V
+        if print_matrix:
+            print('V* = \n' + str(res) + '\n')
+        if res.iseq(V):
+            break
+        V = res
+    
+    if print_matrix:
+        print('V* = \n' + str(res) + '\n')
+    
+    return res

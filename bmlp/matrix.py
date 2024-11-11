@@ -149,9 +149,21 @@ def BMLP_SMP(V, R1, print_matrix=False):
     return res
 
 
-# GraphBLAS version of BMLP-SMP algorithm which performs matrix operations using two input matrices
 def BMLP_IE(V, R1, R2, T=None, print_matrix=False):
-    
+    """GraphBLAS version of BMLP-SMP algorithm 
+        which performs matrix operations using two input matrices
+        of dimension k x n
+
+    Args:
+        V (Vector.sparse): a 1 x 
+        R1 (Matrix.sparse): _description_
+        R2 (Matrix.sparse): _description_
+        T (Vector.sparse, optional): _description_. Defaults to None.
+        print_matrix (bool, optional): _description_. Defaults to False.
+
+    Returns:
+        Matrix.sparse: _description_
+    """
     nrows = R1.nrows
     res = V
     V_ = gb.Vector.sparse(gb.BOOL, nrows)

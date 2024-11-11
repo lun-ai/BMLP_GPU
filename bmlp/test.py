@@ -201,17 +201,21 @@ class BMLPTests(unittest.TestCase):
             R2[src, dst] = True
             
         # Create a vector to represent a query
-        V = gb.Vector.sparse(gb.BOOL, num_cols)
+        V = gb.Matrix.sparse(gb.BOOL, 2, num_cols)
 
         # query the reachability of node 1
-        V[0] = True
+        V[0, 0] = True
+        V[1, 1] = True
         
         res = BMLP_IE(V, R1, R2)
         
-        self.assertEqual(res[0],True) 
-        self.assertEqual(res[1],True) 
-        self.assertEqual(res[2],True) 
-        self.assertEqual(res[3],True)
+        self.assertEqual(res[0,0],True) 
+        self.assertEqual(res[0,1],True) 
+        self.assertEqual(res[0,2],True) 
+        self.assertEqual(res[0,3],True)
+        self.assertEqual(res[1,1],True) 
+        self.assertEqual(res[1,2],True) 
+        self.assertEqual(res[1,3],True)
     
     def test_bmlp_ie_filtering(self):
         
@@ -236,24 +240,36 @@ class BMLPTests(unittest.TestCase):
             R2[src, dst] = True
             
         # Create a vector to represent a query
-        V = gb.Vector.sparse(gb.BOOL, num_cols)
+        V = gb.Matrix.sparse(gb.BOOL, 2, num_cols)
         # Create a vector to represent a filter on the second matrix
-        T = gb.Vector.sparse(gb.BOOL, num_rows)
+        T = gb.Matrix.sparse(gb.BOOL, 2, num_rows)
 
-        # Query the reachability of node 3
-        V[0] = True
-        V[3] = True
+        # Query the reachability of node 0 and 3
+        V[0,0] = True
+        V[0,3] = True
         # Filter the second row in the matrix
-        T[0] = True
-        T[2] = True
+        T[0,0] = True
+        T[0,2] = True
+        
+        # Query the reachability of node 1
+        V[1,1] = True
+        # Filter the second row in the matrix
+        T[1,0] = True
+        T[1,1] = True
+        T[1,2] = True
         
         res = BMLP_IE(V, R1, R2, T)
         
-        self.assertEqual(res[0],True) 
-        self.assertEqual(res[1],True) 
-        self.assertEqual(res[2],True) 
-        self.assertEqual(res[3],True)
-        self.assertEqual(res[4],True)
+        self.assertEqual(res[0,0],True) 
+        self.assertEqual(res[0,1],True) 
+        self.assertEqual(res[0,2],True) 
+        self.assertEqual(res[0,3],True)
+        self.assertEqual(res[0,4],True)
+        
+        self.assertEqual(res[1,1],True) 
+        self.assertEqual(res[1,2],True) 
+        self.assertEqual(res[1,3],True)
+        self.assertEqual(res[1,4],True)
 
 if __name__ == '__main__':
     unittest.main()

@@ -153,27 +153,33 @@ def BMLP_IE(V, R1, R2, T=None, print_matrix=False):
     """GraphBLAS version of BMLP-IE algorithm 
         which performs matrix operations using two input matrices
         of dimension k x n.
+        
+        The input V is u rows of 1 x n vectors (a batch of u inputs).
 
     Args:
-        V (Vector.sparse): A 1 x n vector
+        V (Vector.sparse): A matrix containing u 1 x n vectors
         R1 (Matrix.sparse): A k x n boolean matrix
         R2 (Matrix.sparse): A k x n boolean matrix
-        T (Vector.sparse, optional): A 1 x k filter applied on R2. Defaults to None.
+        T (Vector.sparse, optional): A u x k filter applied on R2. Defaults to None.
         print_matrix (bool, optional): Print trace of fixpoint computation. Defaults to False.
 
     Returns:
         Matrix.sparse: _description_
     """
     nrows = R1.nrows
-    res = V
-    V_ = gb.Vector.sparse(gb.BOOL, nrows)
+    ncols = R1.ncols
+    ninputs = V.nrows
+    res = gb.Matrix.sparse(gb.BOOL, ninputs, ninputs, ncols)
+    V_ = gb.Matrix.sparse(gb.BOOL, ninputs, nrows)
     
     while True:
         # Find all rows that are subsets of V 
-        for i in range(nrows):
-            row = R1[i,:]
-            if row.iseq(V * row):
-                V_[i] = True
+        for i in range(ninputs):
+            input = V[i,:]
+            for j in range(nrows):
+                row = R1[j,:]
+                if row.iseq(input * row):
+                    V_[i,j] = True
 
         # Multiply with rows in R2 filtered by T and update
         res = V_ @ R2 + V if T is None else (V_ * T) @ R2 + V

@@ -188,38 +188,27 @@ def BMLP_IE(V, R1, R2, T=None, print_matrix=False):
     
     if T is not None:
         T.resize(ninputs,nrows)
-        mask = gb.Matrix.iso(False, ninputs,nrows)
-        T = (T + mask).apply(gb.types.BOOL.LNOT) 
+        T = T.apply(gb.types.BOOL.LNOT) 
+    
+    SNum = 0
     
     while True:
         # Find all rows that are subsets of V 
         # Need R2[i,j] -> R1[i,j] here
         with gb.types.BOOL.LAND_LOR:
             V_ = V @ R1
-            
-        # print(V)
-        # print(R1)
-        # print(V_)
-        # print(T)
-        
-        # for i in range(ninputs):
-        #     input = V[i,:]
-        #     for j in range(nrows):
-        #         row = R1[j,:]
-        #         if row.iseq(input * row):
-        #             V_[i,j] = True
-
 
         # Multiply with rows in R2 filtered by T and update
-        res = V_ @ R2 + V if T is None else (V_ * T) @ R2 + V
+        res = V_ @ R2 + V if T is None else (V_.union(T,add_op=gb.types.BOOL.MIN)) @ R2 + V
         
         if print_matrix:
             print('V* = \n' + str(res) + '\n')
         if res.iseq(V):
             break
         V = res
+        SNum += 1
     
     if print_matrix:
         print('V* = \n' + str(res) + '\n')
     
-    return res
+    return res, SNum

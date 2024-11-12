@@ -220,7 +220,7 @@ class BMLPTests(unittest.TestCase):
         V[0, 0] = True
         V[1, 1] = True
         
-        res = BMLP_IE(V, R1, R2)
+        res, _ = BMLP_IE(V, R1, R2)
         
         self.assertEqual(res[0,0],True) 
         self.assertEqual(res[0,1],True) 
@@ -230,7 +230,50 @@ class BMLPTests(unittest.TestCase):
         self.assertEqual(res[1,2],True) 
         self.assertEqual(res[1,3],True)
     
-    def test_bmlp_ie_filtering(self):
+    def test_bmlp_ie_filtering_1(self):
+        
+        edges_1 = [(0, 0), (1, 1), (2, 2), (2, 3)]
+        edges_2 = [(0, 1), (1, 2), (1, 3), (2, 4)]
+        
+        num_rows = 3
+        num_cols = 5
+        
+        # Create the first matrix using BOOL type
+        R1 = gb.Matrix.sparse(gb.BOOL, num_rows, num_cols)
+        
+        # Create the second matrix using BOOL type
+        R2 = gb.Matrix.sparse(gb.BOOL, num_rows, num_cols)
+
+        # Insert edges into the first matrix
+        for src, dst in edges_1:
+            R1[src, dst] = True
+            
+        # Insert edges into the second matrix
+        for src, dst in edges_2:
+            R2[src, dst] = True
+            
+        # Create a vector to represent a query
+        V = gb.Matrix.sparse(gb.BOOL, 2, num_cols)
+        # Create a vector to represent a filter on the second matrix
+        T = gb.Matrix.sparse(gb.BOOL, 2, num_rows)
+
+        # Query the reachability of node 0 and 3
+        V[0,0] = True
+        V[0,2] = True
+        V[0,3] = True
+        # Filter the second row in the matrix
+        T[0,0] = True
+        T[0,2] = True
+        
+        res, _ = BMLP_IE(V, R1, R2, T)
+        
+        self.assertEqual(res[0,0],True) 
+        self.assertEqual(res[0,1],False)
+        self.assertEqual(res[0,2],True) 
+        self.assertEqual(res[0,3],True)
+        self.assertEqual(res[0,4],False)
+    
+    def test_bmlp_ie_filtering_2(self):
         
         edges_1 = [(0, 0), (1, 1), (2, 2), (2, 3)]
         edges_2 = [(0, 1), (1, 2), (1, 3), (2, 4)]
@@ -268,8 +311,9 @@ class BMLPTests(unittest.TestCase):
         # Filter the first row in the matrix
         T[1,0] = True
         
+        res, _ = BMLP_IE(V, R1, R2, T)
         
-        res = BMLP_IE(V, R1, R2, T)
+        print(res)
         
         self.assertEqual(res[0,0],True) 
         self.assertEqual(res[0,1],True) 
@@ -294,7 +338,7 @@ class BMLPTests(unittest.TestCase):
         T = integers_to_boolean_matrix("bmlp/demo/mstate2")
         
         # Run BMLP-IE
-        res = BMLP_IE(V,R1,R2,T=T)
+        res, _ = BMLP_IE(V,R1,R2,T=T)
         
         # Save computed result to local
         boolean_matrix_to_integers(res,"mstate10","bmlp/demo/mstate10")

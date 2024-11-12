@@ -233,7 +233,7 @@ class BMLPTests(unittest.TestCase):
     def test_bmlp_ie_filtering(self):
         
         edges_1 = [(0, 0), (1, 1), (2, 2), (2, 3)]
-        edges_2 = [(0, 1), (0, 2), (1, 2), (1, 3), (2, 4)]
+        edges_2 = [(0, 1), (1, 2), (1, 3), (2, 4)]
         
         num_rows = 3
         num_cols = 5
@@ -261,28 +261,43 @@ class BMLPTests(unittest.TestCase):
         V[0,0] = True
         V[0,3] = True
         # Filter the second row in the matrix
-        T[0,0] = True
-        T[0,2] = True
+        T[0,1] = True
         
         # Query the reachability of node 1
         V[1,1] = True
-        # Filter the second row in the matrix
+        # Filter the first row in the matrix
         T[1,0] = True
-        T[1,1] = True
-        T[1,2] = True
+        
         
         res = BMLP_IE(V, R1, R2, T)
         
         self.assertEqual(res[0,0],True) 
         self.assertEqual(res[0,1],True) 
-        self.assertEqual(res[0,2],True) 
+        self.assertEqual(res[0,2],False) 
         self.assertEqual(res[0,3],True)
-        self.assertEqual(res[0,4],True)
+        self.assertEqual(res[0,4],False)
         
+        self.assertEqual(res[1,0],False)
         self.assertEqual(res[1,1],True) 
         self.assertEqual(res[1,2],True) 
         self.assertEqual(res[1,3],True)
         self.assertEqual(res[1,4],True)
+        
+    def test_bmlp_ie_demo_bio_db(self):
+
+        # Test BMLP-IE on BMLP_active datasets
+        # Load datasets
+        R1 = integers_to_boolean_matrix("bmlp/demo/mstate1")
+        R2 = integers_to_boolean_matrix("bmlp/demo/mstate3")
+        # Load inputs
+        V = integers_to_boolean_matrix("bmlp/demo/mstate5")
+        T = integers_to_boolean_matrix("bmlp/demo/mstate2")
+        
+        # Run BMLP-IE
+        res = BMLP_IE(V,R1,R2,T=T)
+        
+        # Save computed result to local
+        boolean_matrix_to_integers(res,"mstate10","bmlp/demo/mstate10")
 
 if __name__ == '__main__':
     unittest.main()

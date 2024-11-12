@@ -174,30 +174,44 @@ def BMLP_IE(V, R1, R2, T=None, print_matrix=False):
     nrows = R1.nrows
     ncols = max(R1.ncols, R2.ncols)
     ninputs = V.nrows
+    
     R1.resize(nrows,ncols)
+    R1 = R1.apply(gb.types.BOOL.LNOT).T
+
     R2.resize(nrows,ncols)
     V.resize(ninputs, ncols)
+    mask = gb.Matrix.iso(False, ninputs, ncols)
+    V = V + mask
     
     res = gb.Matrix.sparse(gb.BOOL, ninputs, ncols)
     V_ = gb.Matrix.sparse(gb.BOOL, ninputs, nrows)
     
     if T is not None:
         T.resize(ninputs,nrows)
+        mask = gb.Matrix.iso(False, ninputs,nrows)
+        T = (T + mask).apply(gb.types.BOOL.LNOT) 
     
     while True:
         # Find all rows that are subsets of V 
-        for i in range(ninputs):
-            input = V[i,:]
-            for j in range(nrows):
-                row = R1[j,:]
-                if row.iseq(input * row):
-                    V_[i,j] = True
+        # Need R2[i,j] -> R1[i,j] here
+        with gb.types.BOOL.LAND_LOR:
+            V_ = V @ R1
+            
+        # print(V)
+        # print(R1)
+        # print(V_)
+        # print(T)
+        
+        # for i in range(ninputs):
+        #     input = V[i,:]
+        #     for j in range(nrows):
+        #         row = R1[j,:]
+        #         if row.iseq(input * row):
+        #             V_[i,j] = True
+
 
         # Multiply with rows in R2 filtered by T and update
-        res = V_ @ R2 + V if T is None else (V_ - T) @ R2 + V
-        
-        print(V_)
-        print(V_ - T)
+        res = V_ @ R2 + V if T is None else (V_ * T) @ R2 + V
         
         if print_matrix:
             print('V* = \n' + str(res) + '\n')

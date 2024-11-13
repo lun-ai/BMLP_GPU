@@ -1,4 +1,4 @@
-import pygraphblas as gb
+from pygraphblas import Matrix, types, Vector, BOOL
 import numpy as np
 from bmlp.utils import *
 
@@ -59,9 +59,9 @@ def integers_to_boolean_matrix(path, is_squared=False):
     
     if is_squared:
         dim = max(nrows, ncols)
-        matrix = gb.Matrix.sparse(gb.BOOL, dim, dim)
+        matrix = Matrix.sparse(BOOL, dim, dim)
     else:
-        matrix = gb.Matrix.sparse(gb.BOOL, nrows, ncols)
+        matrix = Matrix.sparse(BOOL, nrows, ncols)
     
     for row in range(0, len(bitcodes)):
         for col in range(0, len(bitcodes[row])):
@@ -74,7 +74,7 @@ def integers_to_boolean_matrix(path, is_squared=False):
 
 # Create an identity matrix
 def identity(dim):
-    I = gb.Matrix.sparse(gb.BOOL, dim, dim)
+    I = Matrix.sparse(BOOL, dim, dim)
     for i in range(dim):
         I[i, i] = True
     return I
@@ -102,7 +102,7 @@ def BMLP_RMS(P1, P2=None, print_matrix=False):
     
     # the dimensions of the matrix, e.g. the number of nodes in a graph
     dim = P1.nrows
-    empty_matrix = gb.Matrix.sparse(gb.BOOL, dim, dim)
+    empty_matrix = Matrix.sparse(BOOL, dim, dim)
 
     # Add identy to the adjacency matrix
     R = identity(dim) + P1 if P2 is None else identity(dim) + P2
@@ -154,7 +154,8 @@ def BMLP_SMP(V, R1, print_matrix=False):
     return res
 
 
-def BMLP_IE(V, R1, R2, T=None, print_matrix=False):
+def BMLP_IE(V: Matrix.sparse, R1: Matrix.sparse, R2: Matrix.sparse, T: Matrix.sparse=None, 
+            localised=False, print_matrix=False) -> Matrix.sparse:
     """GraphBLAS version of BMLP-IE algorithm 
         which performs matrix operations using two input matrices
         of dimension k x n.
@@ -162,47 +163,63 @@ def BMLP_IE(V, R1, R2, T=None, print_matrix=False):
         The input V is u rows of 1 x n vectors (a batch of u inputs).
 
     Args:
-        V (Vector.sparse): A matrix containing u 1 x n vectors.
+        V (Matrix.sparse): A matrix containing u 1 x n vectors.
         R1 (Matrix.sparse): A k x n boolean matrix.
         R2 (Matrix.sparse): A k x n boolean matrix.
-        T (Vector.sparse, optional): A u x k filter applied on R2. Defaults to None.
+        T (Matrix.sparse, optional): A u x k filter applied on R2. Defaults to None.
+        localised (bool, optional): Use matrices stored in SuiteSparse specific binary file at R1 and R2 locations.
         print_matrix (bool, optional): Print trace of fixpoint computation. Defaults to False.
 
     Returns:
         Matrix.sparse: V* transitive closure (fixpoint) containing u rows of 1 x n vectors.
     """
-    nrows = R1.nrows
-    ncols = max(R1.ncols, R2.ncols)
-    ninputs = V.nrows
     
-    R1.resize(nrows,ncols)
-    R1 = R1.apply(gb.types.BOOL.LNOT).T
+    if localised:
+        R1 = Matrix.from_binfile(R1)
+        R2 = Matrix.from_binfile(R2)
+        nrows = R1.ncols
+        ncols = max(R1.nrows, R2.ncols)
+    # If R1 and R2 are not stored as SuiteSparse binary format
+    # then R1 and R2 will be pre-processed as they have the same sizes
+    # Otherwise, stored R1 has already been transposed and has a different size.
+    else:
+        nrows = R1.nrows
+        ncols = max(R1.ncols, R2.ncols)
+        R1.resize(nrows, ncols)
+        R1_mask = Matrix.iso(False, nrows, ncols)
+        R1 = R1.union(R1_mask,add_op=types.BOOL.LOR).apply(types.BOOL.LNOT).T
+        R2.resize(nrows,ncols)
 
-    R2.resize(nrows,ncols)
+    # Need to resize matrices to be compatible due to leading zeros
+    # Then Pad the input matrix with default 'False' values
+    ninputs = V.nrows
     V.resize(ninputs, ncols)
-    mask = gb.Matrix.iso(False, ninputs, ncols)
-    V = V + mask
+    V_mask = Matrix.iso(False, ninputs, ncols)
+    V = V.union(V_mask,add_op=types.BOOL.LOR)
     
-    res = gb.Matrix.sparse(gb.BOOL, ninputs, ncols)
-    V_ = gb.Matrix.sparse(gb.BOOL, ninputs, nrows)
-    
+    # res = Matrix.sparse(BOOL, ninputs, ncols)
+    # V_ = Matrix.sparse(BOOL, ninputs, nrows)
+        
     if T is not None:
-        T.resize(ninputs,nrows)
-        T = T.apply(gb.types.BOOL.LNOT) 
+        T.resize(ninputs, nrows)
+        T = T.apply(types.BOOL.LNOT) 
     
     SNum = 0
     
     while True:
         # Find all rows that are subsets of V 
         # Need R2[i,j] -> R1[i,j] here
-        with gb.types.BOOL.LAND_LOR:
-            V_ = V @ R1
+        V_ = V.mxm(R1,semiring=types.BOOL.LAND_LOR)
 
         # Multiply with rows in R2 filtered by T and update
-        res = V_ @ R2 + V if T is None else (V_.union(T,add_op=gb.types.BOOL.MIN)) @ R2 + V
+        if T is None:
+            res = V_ @ R2 + V
+        else:
+            res = (V_.union(T,add_op=types.BOOL.MIN)) @ R2 + V
         
         if print_matrix:
             print('V* = \n' + str(res) + '\n')
+            pass
         if res.iseq(V):
             break
         V = res

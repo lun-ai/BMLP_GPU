@@ -313,8 +313,6 @@ class BMLPTests(unittest.TestCase):
         
         res, _ = BMLP_IE(V, R1, R2, T)
         
-        print(res)
-        
         self.assertEqual(res[0,0],True) 
         self.assertEqual(res[0,1],True) 
         self.assertEqual(res[0,2],False) 
@@ -327,21 +325,57 @@ class BMLPTests(unittest.TestCase):
         self.assertEqual(res[1,3],True)
         self.assertEqual(res[1,4],True)
         
-    def test_bmlp_ie_demo_bio_db(self):
-
-        # Test BMLP-IE on BMLP_active datasets
-        # Load datasets
-        R1 = integers_to_boolean_matrix("bmlp/demo/mstate1")
-        R2 = integers_to_boolean_matrix("bmlp/demo/mstate3")
-        # Load inputs
-        V = integers_to_boolean_matrix("bmlp/demo/mstate5")
-        T = integers_to_boolean_matrix("bmlp/demo/mstate2")
+    def test_bmlp_ie_empty_R1(self):
         
-        # Run BMLP-IE
-        res, _ = BMLP_IE(V,R1,R2,T=T)
+        # No requirements from R1
+        edges_1 = []
+        edges_2 = [(0, 1), (1, 2), (1, 3), (2, 4)]
         
-        # Save computed result to local
-        boolean_matrix_to_integers(res,"mstate10","bmlp/demo/mstate10")
+        num_rows = 3
+        num_cols = 5
+        
+        # Create the first matrix using BOOL type
+        R1 = gb.Matrix.sparse(gb.BOOL, num_rows, num_cols)
+        
+        # Create the second matrix using BOOL type
+        R2 = gb.Matrix.sparse(gb.BOOL, num_rows, num_cols)
 
+        # Insert edges into the first matrix
+        for src, dst in edges_1:
+            R1[src, dst] = True
+            
+        # Insert edges into the second matrix
+        for src, dst in edges_2:
+            R2[src, dst] = True
+            
+        # Create a vector to represent a query
+        V = gb.Matrix.sparse(gb.BOOL, 2, num_cols)
+        # Create a vector to represent a filter on the second matrix
+        T = gb.Matrix.sparse(gb.BOOL, 2, num_rows)
+
+        # Node 0 should reach all other nodes
+        V[0,0] = True
+        
+        # Now node 0 should not reach any other node
+        V[1,0] = True
+        # Filter the first row in the matrix
+        T[1,0] = True
+        T[1,1] = True
+        T[1,2] = True
+        
+        res, _ = BMLP_IE(V, R1, R2, T)
+        
+        self.assertEqual(res[0,0],True) 
+        self.assertEqual(res[0,1],True) 
+        self.assertEqual(res[0,2],True) 
+        self.assertEqual(res[0,3],True)
+        self.assertEqual(res[0,4],True)
+        
+        self.assertEqual(res[1,0],True)
+        self.assertEqual(res[1,1],False) 
+        self.assertEqual(res[1,2],False) 
+        self.assertEqual(res[1,3],False)
+        self.assertEqual(res[1,4],False)
+    
 if __name__ == '__main__':
     unittest.main()

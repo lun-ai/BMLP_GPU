@@ -1,4 +1,4 @@
-from matrix import *
+from .matrix import *
 
 
 def BMLP_IE_gpu(R1_path, R2_path, V_path, T_path, P_name, Res_path):

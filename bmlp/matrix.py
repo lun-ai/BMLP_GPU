@@ -1,6 +1,8 @@
 from pygraphblas import Matrix, types, Vector, BOOL
 import numpy as np
-from bmlp.utils import *
+import time
+
+from .utils import *
 
 # Use python wrapper of GraphBLAS on GPU (BLAS - Basic Linear Algebra Subprograms)
 # GraphBLAS supports graph operations via linear algebraic methods (e.g. matrix multiplication) over various semirings
@@ -22,7 +24,7 @@ from bmlp.utils import *
 # A += B	In-place Matrix Element-Wise Union	type default PLUS combiner
 # A - B	    Matrix Element-Wise Union	type default MINUS combiner
 # A -= B	In-place Matrix Element-Wise Union	type default MINUS combiner
-# The element-wise intersection performs the correct boolean operation on elements (None or BOOL) with higher operator order 
+# The element-wise intersection performs the correct boolean operation on elements (None or BOOL) with higher operator order
 # A * B	    Matrix Element-Wise Intersection	type default TIMES combiner
 # A *= B	In-place Matrix Element-Wise Intersection	type default TIMES combiner
 # A / B	    Matrix Element-Wise Intersection	type default DIV combiner
@@ -37,40 +39,50 @@ from bmlp.utils import *
 
 # Write graphBLAS matrix as a set of integers in a prolog file
 def boolean_matrix_to_integers(matrix, name, path):
-    
+
     with open(path, 'w') as prolog:
         for i in range(0, matrix.nrows):
-            
+
             out = 0
             for j in range(matrix.ncols - 1, -1, -1):
-                
+
                 # sparse matrix elements can be empty bits
-                element = matrix.get(i, j)
+                element: BOOL = matrix.get(i, j)
                 out = (out << 1) | element if element else (out << 1)
-                
+
             prolog.write('%s(%s,%s).\n' % (name, i, out))
 
 
 # From a path to a prolog file containing a boolean matrix
 # convert it into a graphBLAS matrix for computation
 def integers_to_boolean_matrix(path, is_squared=False):
-    
+
     bitcodes, nrows, ncols = parse_prolog_binary_codes(path)
-    
+
     if is_squared:
         dim = max(nrows, ncols)
         matrix = Matrix.sparse(BOOL, dim, dim)
     else:
         matrix = Matrix.sparse(BOOL, nrows, ncols)
-    
+
     for row in range(0, len(bitcodes)):
         for col in range(0, len(bitcodes[row])):
-            
+
             if bitcodes[row][col]:
                 matrix[row, col] = True
-    
+
     return matrix
-    
+
+
+# Negate elements in a sparse matrix by treating empty cells as 'False'
+def matrix_negate(M: Matrix.sparse):
+
+    # Create an iso mask of default 'False' values
+    OR = Matrix.iso(False, M.nrows, M.ncols)
+    # Negate the OR results between the union of elements and select those with 'True'
+    M = (M + OR).apply(types.BOOL.LNOT).select('==', True)
+    return M
+
 
 # Create an identity matrix
 def identity(dim):
@@ -80,13 +92,11 @@ def identity(dim):
     return I
 
 
-
 def BMLP_RMS(P1, P2=None, print_matrix=False):
-    
     """GraphBLAS version of BMLP-RMS algorithm which performs repeated matrix squaring
 
         P0, P1 and P2 are boolean matrices representing the following predicates.
-        p0(X,Z):- p1(X,Z). 
+        p0(X,Z):- p1(X,Z).
         p0(X,Z):- p2(X,Y),p0(Y,Z).
 
         Default p1 and p2 represent the same predicate.
@@ -99,7 +109,7 @@ def BMLP_RMS(P1, P2=None, print_matrix=False):
     Returns:
         Matrix.sparse: fixpoint boolean matrix representing predicate p0
     """
-    
+
     # the dimensions of the matrix, e.g. the number of nodes in a graph
     dim = P1.nrows
     empty_matrix = Matrix.sparse(BOOL, dim, dim)
@@ -107,7 +117,7 @@ def BMLP_RMS(P1, P2=None, print_matrix=False):
     # Add identy to the adjacency matrix
     R = identity(dim) + P1 if P2 is None else identity(dim) + P2
     if print_matrix:
-        print('R = R2 + I = \n'+ str(R) + '\n')
+        print('R = R2 + I = \n' + str(R) + '\n')
 
     # Iteratively compute the transitive closure using boolean matrix multiplication
     # Initialise closure matrix with an empty matrix
@@ -123,16 +133,16 @@ def BMLP_RMS(P1, P2=None, print_matrix=False):
 
     # Multiply to remove redundant diagonal elements
     res = R_ @ P1
-    
+
     if print_matrix:
         print('R0* = \n' + str(res) + '\n')
-    
+
     return res
 
 
 # GraphBLAS version of BMLP-SMP algorithm which performs vector multiplication
 def BMLP_SMP(V, R1, print_matrix=False):
-    
+
     # Push the model subset selection into the summation for improved performance
     V_ = V
     while True:
@@ -143,23 +153,23 @@ def BMLP_SMP(V, R1, print_matrix=False):
         if V_.iseq(V):
             break
         V = V_
-    
+
     # Multiply to remove redundant diagonal elements
     res = V_ @ R1
-    
+
     if print_matrix:
         print('V* = \n' + str(res) + '\n')
-    
+
     # Multiple to remove redundant elements
     return res
 
 
-def BMLP_IE(V: Matrix.sparse, R1: Matrix.sparse, R2: Matrix.sparse, T: Matrix.sparse=None, 
+def BMLP_IE(V: Matrix.sparse, R1: Matrix.sparse, R2: Matrix.sparse, T: Matrix.sparse = None,
             localised=False, print_matrix=False) -> Matrix.sparse:
-    """GraphBLAS version of BMLP-IE algorithm 
+    """GraphBLAS version of BMLP-IE algorithm
         which performs matrix operations using two input matrices
         of dimension k x n.
-        
+
         The input V is u rows of 1 x n vectors (a batch of u inputs).
 
     Args:
@@ -173,7 +183,8 @@ def BMLP_IE(V: Matrix.sparse, R1: Matrix.sparse, R2: Matrix.sparse, T: Matrix.sp
     Returns:
         Matrix.sparse: V* transitive closure (fixpoint) containing u rows of 1 x n vectors.
     """
-    
+
+    # Localised R1 is assumed transposed to avoid redundant operations
     if localised:
         R1 = Matrix.from_binfile(R1)
         R2 = Matrix.from_binfile(R2)
@@ -186,37 +197,45 @@ def BMLP_IE(V: Matrix.sparse, R1: Matrix.sparse, R2: Matrix.sparse, T: Matrix.sp
         nrows = R1.nrows
         ncols = max(R1.ncols, R2.ncols)
         R1.resize(nrows, ncols)
-        R1_mask = Matrix.iso(False, nrows, ncols)
-        R1 = R1.union(R1_mask,add_op=types.BOOL.LOR).apply(types.BOOL.LNOT).T
-        R2.resize(nrows,ncols)
+        R1 = R1.T
+        R2.resize(nrows, ncols)
 
     # Need to resize matrices to be compatible due to leading zeros
     # Then Pad the input matrix with default 'False' values
     ninputs = V.nrows
     V.resize(ninputs, ncols)
-    V_mask = Matrix.iso(False, ninputs, ncols)
-    V = V.union(V_mask,add_op=types.BOOL.LOR)
-    
-    # res = Matrix.sparse(BOOL, ninputs, ncols)
-    # V_ = Matrix.sparse(BOOL, ninputs, nrows)
-        
+
+    # When a filter on R2 is applied, negate it to find which R2 rows to keep
     if T is not None:
         T.resize(ninputs, nrows)
-        T = T.apply(types.BOOL.LNOT) 
-    
+        T = T.apply(types.BOOL.LNOT)
+
     SNum = 0
-    
+
+    total_time = 0
     while True:
-        # Find all rows that are subsets of V 
-        # Need R2[i,j] -> R1[i,j] here
-        V_ = V.mxm(R1,semiring=types.BOOL.LAND_LOR)
+        # Find all rows that are subsets of V
+        # Would need R2[i,j] -> R1[i,j] if matrix-matrix mul
+        # can be performed on the element union
+
+        # A sparse matrix workaround
+        # Negate the V matrix while keeping it sparse to find all R1 rows that are not subsets
+        # This can be done with sparse matrix mul without require union matrix-matrix mul
+        # start_time = time.time()
+        V_ = matrix_negate(V) @ R1
+        V_ = matrix_negate(V_)
+        # total_time += time.time() - start_time
 
         # Multiply with rows in R2 filtered by T and update
         if T is None:
             res = V_ @ R2 + V
         else:
-            res = (V_.union(T,add_op=types.BOOL.MIN)) @ R2 + V
-        
+            start_time = time.time()
+            res = (V_.union(T, add_op=types.BOOL.MIN)) @ R2 + V
+            total_time += time.time() - start_time
+            # R1.to_binfile("reactant_mat_bin")
+            # R2.to_binfile("product_mat_bin")
+
         if print_matrix:
             print('V* = \n' + str(res) + '\n')
             pass
@@ -224,8 +243,10 @@ def BMLP_IE(V: Matrix.sparse, R1: Matrix.sparse, R2: Matrix.sparse, T: Matrix.sp
             break
         V = res
         SNum += 1
-    
+
+    # print(total_time)
+
     if print_matrix:
         print('V* = \n' + str(res) + '\n')
-    
+
     return res, SNum

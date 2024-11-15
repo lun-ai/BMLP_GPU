@@ -10,9 +10,10 @@ dependencies:
   - cudf
   - cugraph 
   - pygraphblas  # PyGraphBLAS from conda-forge
+  - pygraphviz
   - ipykernel
   - pip
   - pip:
       - pygraphblas  # Ensures latest pygraphblas is installed via pip (if not in conda)
-      - graphviz
+      # - graphviz
       

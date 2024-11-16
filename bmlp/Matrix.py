@@ -2,7 +2,7 @@ from pygraphblas import Matrix, types, Vector, BOOL
 import numpy as np
 import time
 
-from .utils import *
+from .Utils import *
 
 # Use python wrapper of GraphBLAS on GPU (BLAS - Basic Linear Algebra Subprograms)
 # GraphBLAS supports graph operations via linear algebraic methods (e.g. matrix multiplication) over various semirings
@@ -38,10 +38,10 @@ from .utils import *
 
 
 # Write graphBLAS matrix as a set of integers in a prolog file
-def boolean_matrix_to_integers(matrix, name, path):
+def boolean_matrix_to_integers(matrix: Matrix.sparse, name, path):
 
     with open(path, 'w') as prolog:
-        for i in range(0, matrix.nrows):
+        for i in range(matrix.nrows):
 
             out = 0
             for j in range(matrix.ncols - 1, -1, -1):
@@ -65,8 +65,8 @@ def integers_to_boolean_matrix(path, is_squared=False):
     else:
         matrix = Matrix.sparse(BOOL, nrows, ncols)
 
-    for row in range(0, len(bitcodes)):
-        for col in range(0, len(bitcodes[row])):
+    for row in range(len(bitcodes)):
+        for col in range(len(bitcodes[row])):
 
             if bitcodes[row][col]:
                 matrix[row, col] = True
@@ -238,7 +238,6 @@ def BMLP_IE(V: Matrix.sparse, R1: Matrix.sparse, R2: Matrix.sparse, T: Matrix.sp
 
         if print_matrix:
             print('V* = \n' + str(res) + '\n')
-            pass
         if res.iseq(V):
             break
         V = res

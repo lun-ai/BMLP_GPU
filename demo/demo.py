@@ -1,5 +1,5 @@
 import pygraphblas as gb
-from bmlp.matrix import *
+from bmlp.Matrix import *
 from bmlp.call import *
 import time
 

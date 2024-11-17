@@ -79,3 +79,7 @@ class Task:
         pred.set_scores(pc, nc)
 
         return pc >= 1.0 and nc <= 0.0
+
+
+def new_task(pos, neg):
+    return Task(pos, neg)

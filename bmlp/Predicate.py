@@ -69,5 +69,5 @@ class Predicate:
 
 
 # Initial a predicate object with a matrix and name string
-def init_predicate(M, name):
+def new_predicate(M, name):
     return Predicate(M, name)

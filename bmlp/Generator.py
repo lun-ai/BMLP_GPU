@@ -12,13 +12,16 @@ from .Task import *
 class Generator:
     def __init__(self: Any,
                  predicates: list = [],
-                 unary_ops: list = [pinv, precur_self, pchain_self],
-                 binary_ops: list = [pconj, pdisj, precur_1, precur_2, pchain_1, pchain_2]):
+                 unary_ops: list[UnaryOp] = [
+                     InvOp, RecursOpSelf, ChainOpSelf],
+                 binary_ops: list[BinaryOp] = [ConjOp, DisjOp, RecursOp1, RecursOp2, ChainOp1, ChainOp1]):
         self.predicates = predicates
         self.unary_ops = unary_ops  # Based on allowed unary operators
         self.binary_ops = binary_ops  # Based on allowed binary operators
         self.redundancy = 0
         self.new_preds = []
+        # Use the default symbol creator
+        self.syms = Symbols(1)
 
     def add_predicates(self, predicates):
         """Add predicates for generation"""
@@ -49,11 +52,13 @@ class Generator:
 
         # Apply unary operators
         for pred in self.predicates:
-            for op in self.unary_ops:
-                new_pred = op(pred)
+            for unary_op in self.unary_ops:
+                new_pred = unary_op.apply(unary_op, pred, self.syms)
+                if "inv_14(X, Y)" in str(new_pred):
+                    print("New Pred: ", str(new_pred))
+                if hash(new_pred) == 31:
+                    print("redundant:", new_pred.get_matrix())
                 if hash(new_pred) not in cache:
-                    # if "father ¦ mother" in new_pred.get_name():
-                    #     print("New Pred: ", new_pred.get_name())
                     cache[hash(new_pred)] = True
                     self.new_preds.append(new_pred)
                 else:
@@ -62,13 +67,16 @@ class Generator:
         # Apply binary operators to every matrix and the rest
         for i in range(len(self.predicates) - 1):
             for j in range(i + 1, len(self.predicates)):
-                for op in self.binary_ops:
+                for binary_op in self.binary_ops:
                     fst_pred = self.predicates[i]
                     snd_pred = self.predicates[j]
-                    new_pred = op(fst_pred, snd_pred)
+                    new_pred = binary_op.apply(
+                        binary_op, fst_pred, snd_pred, self.syms)
+                    if hash(new_pred) == 31:
+                        print("redundant:", new_pred.get_matrix())
                     if hash(new_pred) not in cache:
-                        # if "father ¦ mother" in new_pred.get_name():
-                        #     print("New Pred: ", new_pred.get_name())
+                        if "inv_14(X, Y)" in str(new_pred):
+                            print("New Pred: ", str(new_pred))
                         cache[hash(new_pred)] = True
                         self.new_preds.append(new_pred)
                     else:

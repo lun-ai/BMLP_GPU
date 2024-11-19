@@ -405,33 +405,33 @@ class BMLPTests(unittest.TestCase):
         #       {   parent(harry,sally). parent(mary,john).
         #           parent(harry,harry).                    }
 
-        m1 = gb.Matrix.sparse(gb.BOOL, 4, 4)
+        m1 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m1[0, 1] = True
         m1[0, 2] = True
         father = Predicate.new_predicate(m1, "father")
 
-        m2 = gb.Matrix.sparse(gb.BOOL, 4, 4)
+        m2 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m2[3, 1] = True
         m2[3, 2] = True
         mother = Predicate.new_predicate(m2, "mother")
 
-        m3 = gb.Matrix.sparse(gb.BOOL, 4, 4)
+        m3 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m3[0, 0] = True
         m3[1, 1] = True
         male = Predicate.new_predicate(m3, "male")
 
-        m4 = gb.Matrix.sparse(gb.BOOL, 4, 4)
+        m4 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m4[2, 2] = True
         m4[3, 3] = True
         female = Predicate.new_predicate(m4, "female")
 
-        pos = gb.Matrix.sparse(gb.BOOL, 4, 4)
+        pos = gb.Matrix.sparse(gb.BOOL, 64, 64)
         pos[0, 1] = True
         pos[0, 2] = True
         pos[3, 1] = True
         pos[3, 2] = True
         # Negative examples
-        neg = gb.Matrix.sparse(gb.BOOL, 4, 4)
+        neg = gb.Matrix.sparse(gb.BOOL, 64, 64)
         neg[0, 3] = True
         neg[2, 1] = True
         neg[0, 0] = True
@@ -446,16 +446,17 @@ class BMLPTests(unittest.TestCase):
         success, res, _ = generator.invent_predicates_for_task(learn_parent)
 
         self.assertTrue(success)
-        self.assertEqual(res[0].get_name(), "(father ¦ mother)")
+        self.assertEqual(
+            str(res[0]), "inv_14(X, Y) :- father(X, Y).\ninv_14(X, Y) :- mother(X, Y).\n")
         self.assertEqual(res[0].get_scores(), (1.0, 0.0))
 
     def test_bmlp_ILP_PI(self):
         #######################################################
         # Background knowledge:
         #
-        # harry+sally
-        # /		\
-        # john		mary
+        #               harry+sally
+        #               /		\
+        #             john		mary
         #             |          |
         #           bill        maggie
         # father(harry,john). mother(sally,john).
@@ -480,39 +481,39 @@ class BMLPTests(unittest.TestCase):
         #       {   grandparent(harry,sally). grandparent(mary,john).
         #           grandparent(harry,harry). grandparent(john, bill).  }
 
-        m1 = gb.Matrix.sparse(gb.BOOL, 6, 6)
+        m1 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m1[0, 1] = True
         m1[0, 2] = True
         m1[1, 4] = True
         father = Predicate.new_predicate(m1, "father")
 
-        m2 = gb.Matrix.sparse(gb.BOOL, 6, 6)
+        m2 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m2[3, 1] = True
         m2[3, 2] = True
         m2[2, 5] = True
         mother = Predicate.new_predicate(m2, "mother")
 
-        m3 = gb.Matrix.sparse(gb.BOOL, 6, 6)
+        m3 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m3[0, 0] = True
         m3[1, 1] = True
         m3[4, 4] = True
         male = Predicate.new_predicate(m3, "male")
 
-        m4 = gb.Matrix.sparse(gb.BOOL, 6, 6)
+        m4 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m4[2, 2] = True
         m4[3, 3] = True
         m4[5, 5] = True
         female = Predicate.new_predicate(m4, "female")
 
         # Postive examples
-        pos = gb.Matrix.sparse(gb.BOOL, 6, 6)
+        pos = gb.Matrix.sparse(gb.BOOL, 64, 64)
         pos[0, 4] = True
         pos[0, 5] = True
         pos[3, 4] = True
         pos[3, 5] = True
 
         # Negative examples
-        neg = gb.Matrix.sparse(gb.BOOL, 6, 6)
+        neg = gb.Matrix.sparse(gb.BOOL, 64, 64)
         neg[0, 3] = True
         neg[2, 1] = True
         neg[0, 0] = True
@@ -534,8 +535,8 @@ class BMLPTests(unittest.TestCase):
             learn_grandparent, cached)
 
         self.assertTrue(success)
-        self.assertEqual(res[0].get_name(),
-                         "(inv <- (father ¦ mother), (father ¦ mother))")
+        self.assertEqual(str(res[0]),
+                         "inv_14(X, Y) :- father(X, Y).\ninv_14(X, Y) :- mother(X, Y).\ninv_78(X, Y) :- inv_14(X, Z), inv_14(Z, Y).\n")
         self.assertEqual(res[0].get_scores(), (1.0, 0.0))
 
 

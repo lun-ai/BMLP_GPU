@@ -1,5 +1,6 @@
 from .Matrix import *
 from .Utils import *
+from cudf import DataFrame
 
 
 class Predicate:
@@ -57,6 +58,9 @@ class Predicate:
         """Detailed representation"""
         return f"Predicate(\nmatrix=\n{self.matrix}, \nname={self.name}, scores=({self.pos_score}, {self.neg_score}))"
 
+    def __hash__(self) -> int:
+        return int(DataFrame(self.matrix.to_lists()).hash_values().sum())
+
     # def __hash__(self):
     #     """
     #     Mueller Hash function for sparse matrices based on WarpCore.
@@ -64,36 +68,30 @@ class Predicate:
 
     #     Assuming matrices have dimensions multiples of 64.
     #     """
+    #     # Pseudo code
+    #     for serialise matrix data x:
+    #         x = ((x >> 16) ^ x) * 0x45d9f3b
+    #         x = ((x >> 16) ^ x) * 0x45d9f3b
+    #         x = ((x >> 16) ^ x)
+    #
+    #     return x
 
-    #     matrix_hash = 0
+    # def __hash__(self):
+    #     """
+    #     Simple non-cryptographic XOR Hash function of sparse matrices.
+    #     Avoid some solutions actually.
+    #     """
 
     #     # Apply XOR Monoid reduction to the matrix
-    #     for i in self.matrix.rows:
-    #         x = ((x >> 16) ^ x) * 0x45d9f3b
-    #     x = ((x >> 16) ^ x) * 0x45d9f3b
-    #     x = ((x >> 16) ^ x)
+    #     bit_position = self.matrix.reduce_vector(
+    #         types.BOOL.LXOR_MONOID).to_arrays()[0]
+    #     matrix_hash = 0
+
     #     # Convert the bit position to a hash
     #     for i in bit_position:
     #         matrix_hash |= 1 << i
 
     #     return matrix_hash
-
-    def __hash__(self):
-        """
-        Simple non-cryptographic XOR Hash function of sparse matrices.
-        Avoid some solutions actually.
-        """
-
-        # Apply XOR Monoid reduction to the matrix
-        bit_position = self.matrix.reduce_vector(
-            types.BOOL.LXOR_MONOID).to_arrays()[0]
-        matrix_hash = 0
-
-        # Convert the bit position to a hash
-        for i in bit_position:
-            matrix_hash |= 1 << i
-
-        return matrix_hash
 
 
 class Symbols:

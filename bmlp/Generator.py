@@ -54,10 +54,6 @@ class Generator:
         for pred in self.predicates:
             for unary_op in self.unary_ops:
                 new_pred = unary_op.apply(unary_op, pred, self.syms)
-                if "inv_14(X, Y)" in str(new_pred):
-                    print("New Pred: ", str(new_pred))
-                if hash(new_pred) == 31:
-                    print("redundant:", new_pred.get_matrix())
                 if hash(new_pred) not in cache:
                     cache[hash(new_pred)] = True
                     self.new_preds.append(new_pred)
@@ -72,11 +68,7 @@ class Generator:
                     snd_pred = self.predicates[j]
                     new_pred = binary_op.apply(
                         binary_op, fst_pred, snd_pred, self.syms)
-                    if hash(new_pred) == 31:
-                        print("redundant:", new_pred.get_matrix())
                     if hash(new_pred) not in cache:
-                        if "inv_14(X, Y)" in str(new_pred):
-                            print("New Pred: ", str(new_pred))
                         cache[hash(new_pred)] = True
                         self.new_preds.append(new_pred)
                     else:

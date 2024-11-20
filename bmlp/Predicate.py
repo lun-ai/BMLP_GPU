@@ -4,15 +4,15 @@ from cudf import DataFrame
 
 
 class Predicate:
-    def __init__(self, matrix: Matrix.sparse, name: str, pos_score: float = 0.0, neg_score: float = 0.0, expr: str = ''):
+    def __init__(self, matrix: Matrix.sparse, name: str, pos_score: float = np.inf, neg_score: float = -np.inf, expr: str = ''):
         """
         Initialize a Predicate object
 
         Args:
             matrix: The predicate matrix
             name: Name of the predicate
-            pos_score: Positive score (default 0.0)
-            neg_score: Negative score (default 0.0)
+            pos_score: Positive score (default 0.5)
+            neg_score: Negative score (default 0.5)
             expr: Program expression (default "")
         """
         self.matrix = matrix
@@ -44,6 +44,22 @@ class Predicate:
     def set_scores(self, pos_score, neg_score):
         """Set predicate scores"""
         self.pos_score = pos_score
+        self.neg_score = neg_score
+
+    def get_positive_score(self):
+        """Return the positive score"""
+        return self.pos_score
+
+    def get_negative_score(self):
+        """Return the negative score"""
+        return self.neg_score
+
+    def set_positive_score(self, pos_score):
+        """Set the positive score"""
+        self.pos_score = pos_score
+
+    def set_negative_score(self, neg_score):
+        """Set the negative score"""
         self.neg_score = neg_score
 
     def update_matrix(self, new_matrix):
@@ -84,13 +100,23 @@ class Predicate:
 
     #     # Apply XOR Monoid reduction to the matrix
     #     bit_position = self.matrix.reduce_vector(
-    #         types.BOOL.LXOR_MONOID).to_arrays()[0]
+    #         types.BOOL.LXOR_MONOID).to_arrays()
     #     matrix_hash = 0
 
     #     # Convert the bit position to a hash
-    #     for i in bit_position:
-    #         matrix_hash |= 1 << i
+    #     for i, pos in enumerate(bit_position[0]):
+    #         matrix_hash |= 1 << pos if bit_position[1][i] == 1 else 0
+    #     print(bit_position)
+    #     print(matrix_hash)
+    #     # Convert the bit position to a hash
+    #     # for i in bit_position:
+    #     #     matrix_hash |= 1 << i
 
+    #     # if matrix_hash == 31:
+    #     #     print(self.matrix.reduce_vector(
+    #     #         types.BOOL.LXOR_MONOID).to_arrays())
+    #     #     print(self.matrix.reduce_vector(
+    #     #         types.BOOL.LXOR_MONOID).to_arrays()[1][4])
     #     return matrix_hash
 
 

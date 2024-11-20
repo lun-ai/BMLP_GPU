@@ -2,19 +2,16 @@ from .Operator import *
 from .Task import *
 
 
-# unary_ops = [pinv, precur_self]
-# With Negation
-# unary_ops = [pinv, pneg, precur_self]
-# binary_ops = [pconj, pdisj, precur_1, precur_2, pchain_1, pchain_2]
+DEFAULT_UNARY_OPS = [InvOp, RecursOpSelf, ChainOpSelf]
+DEFAULT_BINARY_OPS = [ConjOp, DisjOp, RecursOp1, RecursOp2, ChainOp1, ChainOp1]
 
 
 # Generate more predicates from existing predicates using unary and binary operators
 class Generator:
     def __init__(self: Any,
                  predicates: list = [],
-                 unary_ops: list[UnaryOp] = [
-                     InvOp, RecursOpSelf, ChainOpSelf],
-                 binary_ops: list[BinaryOp] = [ConjOp, DisjOp, RecursOp1, RecursOp2, ChainOp1, ChainOp1]):
+                 unary_ops: list[UnaryOp] = DEFAULT_UNARY_OPS,
+                 binary_ops: list[BinaryOp] = DEFAULT_BINARY_OPS):
         self.predicates = predicates
         self.unary_ops = unary_ops  # Based on allowed unary operators
         self.binary_ops = binary_ops  # Based on allowed binary operators
@@ -40,7 +37,7 @@ class Generator:
         return self.predicates
 
     # Apply operators to a set of predicate object
-    def invent_predicates_for_task(self, target: Task, cache: dict = {}, num_hypo: int = 1):
+    def invent_predicates_for_task(self, target: Task, cached: dict = {}, num_hypo: int = 1):
 
         if target is None:
             raise ValueError(
@@ -54,8 +51,9 @@ class Generator:
         for pred in self.predicates:
             for unary_op in self.unary_ops:
                 new_pred = unary_op.apply(unary_op, pred, self.syms)
-                if hash(new_pred) not in cache:
-                    cache[hash(new_pred)] = True
+                # If input predicates are neither incomplete nor inconsistent
+                if new_pred is not None and hash(new_pred) not in cached:
+                    cached[hash(new_pred)] = True
                     self.new_preds.append(new_pred)
                 else:
                     self.redundancy += 1
@@ -68,8 +66,9 @@ class Generator:
                     snd_pred = self.predicates[j]
                     new_pred = binary_op.apply(
                         binary_op, fst_pred, snd_pred, self.syms)
-                    if hash(new_pred) not in cache:
-                        cache[hash(new_pred)] = True
+                    # If input predicates are neither incomplete nor inconsistent
+                    if new_pred is not None and hash(new_pred) not in cached:
+                        cached[hash(new_pred)] = True
                         self.new_preds.append(new_pred)
                     else:
                         self.redundancy += 1
@@ -77,6 +76,7 @@ class Generator:
         # Check if any of the new predicates are correct
         correct_preds = []
         for pred in self.new_preds:
+            # Check if any of the new predicates are correct (consistent and complete)
             if target.check_correctness(pred):
                 correct_preds.append(pred)
                 if len(correct_preds) >= num_hypo:

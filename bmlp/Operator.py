@@ -50,6 +50,12 @@ class NegOp(UnaryOp):
 class ConjOp(BinaryOp):
     def apply(self, pred1: Predicate, pred2: Predicate, syms: Symbols) -> Predicate:
         new_sym = syms.next_symbol()
+        # Too specific, skip specialisations
+        if pred1.get_positive_score() < 1 or pred2.get_positive_score() < 1:
+            return None
+        # Overly general, specialisations have no benefit to either predicate
+        if pred1.get_negative_score() == 1 or pred2.get_negative_score() == 1:
+            return None
         return Predicate(pred1.get_matrix() * pred2.get_matrix(), new_sym,
                          expr=f'{pred1}{pred2}{new_sym}(X, Y) :- {pred1.get_name()}(X, Y), {pred2.get_name()}(X, Y).\n')
 
@@ -58,6 +64,12 @@ class ConjOp(BinaryOp):
 class DisjOp(BinaryOp):
     def apply(self, pred1: Predicate, pred2: Predicate, syms: Symbols) -> Predicate:
         new_sym = syms.next_symbol()
+        # # Too general, skip generalisations
+        if pred1.get_negative_score() > 0 or pred2.get_negative_score() > 0:
+            return None
+        # Overly specific, generalisations have no benefit to either predicate
+        if pred1.get_positive_score() == 0 or pred2.get_positive_score() == 0:
+            return None
         return Predicate(pred1.get_matrix() + pred2.get_matrix(), new_sym,
                          expr=f"{pred1}{pred2}{new_sym}(X, Y) :- {pred1.get_name()}(X, Y).\n{new_sym}(X, Y) :- {pred2.get_name()}(X, Y).\n")
 
@@ -66,6 +78,9 @@ class DisjOp(BinaryOp):
 class RecursOp1(BinaryOp):
     def apply(self, pred1: Predicate, pred2: Predicate, syms: Symbols) -> Predicate:
         new_sym = syms.next_symbol()
+        # Too general, skip generalisations
+        if pred1.get_negative_score() > 0:
+            return None
         return Predicate(BMLP_RMS(pred1.get_matrix(), pred2.get_matrix()), new_sym,
                          expr=f"{pred1}{pred2}{new_sym}(X, Y) :- {pred1.get_name()}(X, Y).\n{new_sym}(X, Y) :- {pred2.get_name()}(X, Z), {new_sym}(Z, Y).\n")
 
@@ -73,6 +88,9 @@ class RecursOp1(BinaryOp):
 class RecursOp2(BinaryOp):
     def apply(self, pred1: Predicate, pred2: Predicate, syms: Symbols) -> Predicate:
         new_sym = syms.next_symbol()
+        # Too general, skip generalisations
+        if pred2.get_negative_score() > 0:
+            return None
         return Predicate(
             BMLP_RMS(pred2.get_matrix(), pred1.get_matrix()), new_sym,
             expr=f"{pred1}{pred2}{new_sym}(X, Y) :- {pred2.get_name()}(X, Y).\n{new_sym}(X, Y) :- {pred1.get_name()}(X, Z), {new_sym}(Z, Y).\n",
@@ -82,6 +100,9 @@ class RecursOp2(BinaryOp):
 class RecursOpSelf(UnaryOp):
     def apply(self, pred: Predicate, syms: Symbols) -> Predicate:
         new_sym = syms.next_symbol()
+        # Too general, skip generalisations
+        if pred.get_negative_score() > 0:
+            return None
         return Predicate(
             BMLP_RMS(pred.get_matrix(), pred.get_matrix()), new_sym,
             expr=f"{pred}{new_sym}(X, Y) :- {pred.get_name()}(X, Y).\n{new_sym}(X, Y) :- {pred.get_name()}(X, Z), {new_sym}(Z, Y).\n",

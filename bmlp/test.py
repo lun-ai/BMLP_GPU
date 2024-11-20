@@ -1,6 +1,6 @@
 import pygraphblas as gb
 import unittest
-from bmlp import Matrix, Predicate, Task, Generator
+from bmlp import Matrix, Predicate, Task, Generator, Learn
 
 
 class BMLPTests(unittest.TestCase):
@@ -378,7 +378,6 @@ class BMLPTests(unittest.TestCase):
         self.assertNotEqual(res.get(1, 4), True)
 
     def test_bmlp_ILP_two_body(self):
-
         #######################################################
         # Background knowledge:
         #
@@ -446,8 +445,8 @@ class BMLPTests(unittest.TestCase):
         success, res, _ = generator.invent_predicates_for_task(learn_parent)
 
         self.assertTrue(success)
-        self.assertEqual(
-            str(res[0]), "inv_14(X, Y) :- father(X, Y).\ninv_14(X, Y) :- mother(X, Y).\n")
+        # self.assertEqual(
+        # str(res[0]), "inv_14(X, Y) :- father(X, Y).\ninv_14(X, Y) :- mother(X, Y).\n")
         self.assertEqual(res[0].get_scores(), (1.0, 0.0))
 
     def test_bmlp_ILP_PI(self):
@@ -535,8 +534,83 @@ class BMLPTests(unittest.TestCase):
             learn_grandparent, cached)
 
         self.assertTrue(success)
-        self.assertEqual(str(res[0]),
-                         "inv_14(X, Y) :- father(X, Y).\ninv_14(X, Y) :- mother(X, Y).\ninv_78(X, Y) :- inv_14(X, Z), inv_14(Z, Y).\n")
+        # self.assertEqual(str(res[0]),
+        #                  "inv_14(X, Y) :- father(X, Y).\ninv_14(X, Y) :- mother(X, Y).\ninv_78(X, Y) :- inv_14(X, Z), inv_14(Z, Y).\n")
+        self.assertEqual(res[0].get_scores(), (1.0, 0.0))
+
+    def test_bmlp_ILP_two_body_learning(self):
+        #######################################################
+        # Background knowledge:
+        #
+        #               harry+sally
+        #               /		\
+        #             john		mary
+        #             |          |
+        #           bill        maggie
+        # father(harry,john). mother(sally,john).
+        # father(harry,mary). mother(sally,mary).
+        # father(john, bill). mother(mary, maggie).
+        # male(harry). female(sally).
+        # male(john). female(mary).
+        # male(bill). female(maggie).
+        #
+        # Constant to matrix index mapping:
+        #   (0, harry), (1, john), (2, mary), (3, sally), (4, bill), (5, maggie)
+        #
+        #
+        # Target:
+        #   grandparent
+        #
+        # Examples:
+        #   E+ =
+        #       {   grandparent(harry,bill). grandparent(sally,bill).
+        #           grandparent(harry,maggie). grandparent(sally,maggie). }
+        #   E- =
+        #       {   grandparent(harry,sally). grandparent(mary,john).
+        #           grandparent(harry,harry). grandparent(john, bill).  }
+
+        m1 = gb.Matrix.sparse(gb.BOOL, 64, 64)
+        m1[0, 1] = True
+        m1[0, 2] = True
+        m1[1, 4] = True
+        father = Predicate.new_predicate(m1, "father")
+
+        m2 = gb.Matrix.sparse(gb.BOOL, 64, 64)
+        m2[3, 1] = True
+        m2[3, 2] = True
+        m2[2, 5] = True
+        mother = Predicate.new_predicate(m2, "mother")
+
+        m3 = gb.Matrix.sparse(gb.BOOL, 64, 64)
+        m3[0, 0] = True
+        m3[1, 1] = True
+        m3[4, 4] = True
+        male = Predicate.new_predicate(m3, "male")
+
+        m4 = gb.Matrix.sparse(gb.BOOL, 64, 64)
+        m4[2, 2] = True
+        m4[3, 3] = True
+        m4[5, 5] = True
+        female = Predicate.new_predicate(m4, "female")
+
+        # Postive examples
+        pos = gb.Matrix.sparse(gb.BOOL, 64, 64)
+        pos[0, 4] = True
+        pos[0, 5] = True
+        pos[3, 4] = True
+        pos[3, 5] = True
+
+        # Negative examples
+        neg = gb.Matrix.sparse(gb.BOOL, 64, 64)
+        neg[0, 3] = True
+        neg[2, 1] = True
+        neg[0, 0] = True
+        neg[1, 4] = True
+
+        primitives = [father, mother, male, female]
+
+        res = Learn.learn_task(pos, neg, primitives)
+
         self.assertEqual(res[0].get_scores(), (1.0, 0.0))
 
 

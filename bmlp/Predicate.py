@@ -11,8 +11,8 @@ class Predicate:
         Args:
             matrix: The predicate matrix
             name: Name of the predicate
-            pos_score: Positive score (default 0.5)
-            neg_score: Negative score (default 0.5)
+            pos_score: Positive score (default np.inf)
+            neg_score: Negative score (default -np.inf)
             expr: Program expression (default "")
         """
         self.matrix = matrix
@@ -75,6 +75,14 @@ class Predicate:
         return f"Predicate(\nmatrix=\n{self.matrix}, \nname={self.name}, scores=({self.pos_score}, {self.neg_score}))"
 
     def __hash__(self) -> int:
+        """Calculate the hash value for the instance.
+
+        This method generates a hash value by converting the matrix to a list and summing the hash values of its elements. 
+        https://docs.rapids.ai/api/cudf/nightly/user_guide/api_docs/api/cudf.dataframe.hash_values/
+
+        Returns:
+            int: The computed hash value of the matrix.
+        """
         return int(DataFrame(self.matrix.to_lists()).hash_values().sum())
 
     # def __hash__(self):

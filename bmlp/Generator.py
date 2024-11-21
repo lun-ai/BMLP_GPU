@@ -1,5 +1,6 @@
 from .Operator import *
 from .Task import *
+import time
 
 
 DEFAULT_UNARY_OPS = [InvOp, RecursOpSelf, ChainOpSelf]
@@ -16,6 +17,8 @@ class Generator:
         self.unary_ops = unary_ops  # Based on allowed unary operators
         self.binary_ops = binary_ops  # Based on allowed binary operators
         self.redundancy = 0
+        self.elimination = 0
+        self.num_new_predicate = len(self.predicates)
         self.new_preds = []
         # Use the default symbol creator
         self.syms = Symbols(1)
@@ -24,9 +27,10 @@ class Generator:
         """Add predicates for generation"""
         self.predicates.append(predicates)
 
-    def update_predicates(self, predicates):
+    def update_predicates(self, num_new_predicate, predicates):
         """Clear all stored predicates"""
         self.predicates = predicates
+        self.num_new_predicate = num_new_predicate
 
     def clear_predicates(self):
         """Clear all stored predicates"""
@@ -46,13 +50,16 @@ class Generator:
         # New predicates objects generated
         self.new_preds = []
         self.redundancy = 0
+        self.elimination = 0
 
         # Apply unary operators
         for pred in self.predicates:
             for unary_op in self.unary_ops:
                 new_pred = unary_op.apply(unary_op, pred, self.syms)
+                if new_pred is None:
+                    self.elimination += 1
                 # If input predicates are neither incomplete nor inconsistent
-                if new_pred is not None and hash(new_pred) not in cached:
+                elif hash(new_pred) not in cached:
                     cached[hash(new_pred)] = True
                     self.new_preds.append(new_pred)
                 else:
@@ -67,7 +74,9 @@ class Generator:
                     new_pred = binary_op.apply(
                         binary_op, fst_pred, snd_pred, self.syms)
                     # If input predicates are neither incomplete nor inconsistent
-                    if new_pred is not None and hash(new_pred) not in cached:
+                    if new_pred is None:
+                        self.elimination += 1
+                    elif hash(new_pred) not in cached:
                         cached[hash(new_pred)] = True
                         self.new_preds.append(new_pred)
                     else:
@@ -93,6 +102,16 @@ class Generator:
             float: The redundancy count.
         """
         return self.redundancy
+
+    def get_elimination(self):
+        """Retrieve the elimination value.
+
+        This method returns the eliminated matrices from the hypothesis space. 
+
+        Returns:
+            float: The elimination count.
+        """
+        return self.elimination
 
     def get_new_preds(self):
         """Retrieve the latest predictions.

@@ -442,12 +442,12 @@ class BMLPTests(unittest.TestCase):
 
         # Define a generator using default operators
         generator = Generator.Generator(primitives)
-        success, res, _ = generator.invent_predicates_for_task(learn_parent)
+        success, prog, _ = generator.invent_predicates_for_task(learn_parent)
 
         self.assertTrue(success)
         # self.assertEqual(
         # str(res[0]), "inv_14(X, Y) :- father(X, Y).\ninv_14(X, Y) :- mother(X, Y).\n")
-        self.assertEqual(res[0].get_scores(), (1.0, 0.0))
+        self.assertEqual(prog[0].get_scores(), (1.0, 0.0))
 
     def test_bmlp_ILP_PI(self):
         #######################################################
@@ -529,16 +529,16 @@ class BMLPTests(unittest.TestCase):
             learn_grandparent, cached)
 
         # Generate more predicates
-        generator.update_predicates(size_2 + primitives)
-        success, res, _ = generator.invent_predicates_for_task(
+        generator.update_predicates(len(size_2), size_2 + primitives)
+        success, prog, _ = generator.invent_predicates_for_task(
             learn_grandparent, cached)
 
         self.assertTrue(success)
         # self.assertEqual(str(res[0]),
         #                  "inv_14(X, Y) :- father(X, Y).\ninv_14(X, Y) :- mother(X, Y).\ninv_78(X, Y) :- inv_14(X, Z), inv_14(Z, Y).\n")
-        self.assertEqual(res[0].get_scores(), (1.0, 0.0))
+        self.assertEqual(prog[0].get_scores(), (1.0, 0.0))
 
-    def test_bmlp_ILP_two_body_learning(self):
+    def test_bmlp_ILP_two_body_learning_1(self):
         #######################################################
         # Background knowledge:
         #
@@ -609,9 +609,92 @@ class BMLPTests(unittest.TestCase):
 
         primitives = [father, mother, male, female]
 
-        res = Learn.learn_task(pos, neg, primitives)
+        prog = Learn.learn_task(pos, neg, primitives, verbose=False)
 
-        self.assertEqual(res[0].get_scores(), (1.0, 0.0))
+        self.assertEqual(prog[0].get_scores(), (1.0, 0.0))
+
+    def test_bmlp_ILP_two_body_learning_2(self):
+        #######################################################
+        # Background knowledge:
+        #
+        # harry+sally
+        # /		\
+        # john		mary
+        #             |          |
+        #           bill        maggie
+        #           \
+        #           ted
+        #
+        # father(harry,john). mother(sally,john).
+        # father(harry,mary). mother(sally,mary).
+        # father(john, bill). mother(mary, maggie).
+        # father(bill, ted).
+        # male(harry). female(sally).
+        # male(john). female(mary).
+        # male(bill). female(maggie).
+        # male(ted).
+        #
+        # Constant to matrix index mapping:
+        #   (0, harry), (1, john), (2, mary), (3, sally), (4, bill), (5, maggie), (6, ted)
+        #
+        #
+        # Target:
+        #   ancestor
+        #
+        # Examples:
+        #   E+ =
+        #       {
+        #           ancestor(harry,ted).  ancestor(harry,john).
+        #           ancestor(harry,bill). ancestor(sally,bill).
+        #           ancestor(harry,maggie). ancestor(sally,maggie). }
+        #   E- =
+        #       {   ancestor(harry,sally). ancestor(mary,john).
+        #           ancestor(harry,harry). ancestor(ted, bill).  }
+        m1 = gb.Matrix.sparse(gb.BOOL, 64, 64)
+        m1[0, 1] = True
+        m1[0, 2] = True
+        m1[1, 4] = True
+        m1[4, 6] = True
+        father = Predicate.new_predicate(m1, "father")
+
+        m2 = gb.Matrix.sparse(gb.BOOL, 64, 64)
+        m2[3, 1] = True
+        m2[3, 2] = True
+        m2[2, 5] = True
+        mother = Predicate.new_predicate(m2, "mother")
+
+        m3 = gb.Matrix.sparse(gb.BOOL, 64, 64)
+        m3[0, 0] = True
+        m3[1, 1] = True
+        m3[4, 4] = True
+        male = Predicate.new_predicate(m3, "male")
+
+        m4 = gb.Matrix.sparse(gb.BOOL, 64, 64)
+        m4[2, 2] = True
+        m4[3, 3] = True
+        m4[5, 5] = True
+        female = Predicate.new_predicate(m4, "female")
+
+        # Postive examples
+        pos = gb.Matrix.sparse(gb.BOOL, 64, 64)
+        pos[0, 1] = True
+        pos[0, 4] = True
+        pos[0, 5] = True
+        pos[0, 6] = True
+        pos[3, 4] = True
+        pos[3, 5] = True
+
+        # Negative examples
+        neg = gb.Matrix.sparse(gb.BOOL, 64, 64)
+        neg[0, 3] = True
+        neg[2, 1] = True
+        neg[0, 0] = True
+        neg[6, 4] = True
+
+        primitives = [father, mother, male, female]
+
+        prog = Learn.learn_task(pos, neg, primitives, verbose=False)
+        self.assertEqual(prog[0].get_scores(), (1.0, 0.0))
 
 
 # Testsuite treated as if a top-level module

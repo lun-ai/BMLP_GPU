@@ -54,10 +54,10 @@ class Task:
 
     # Compute the coverage of invented predicates of positive and negative examples
     def pos_coverage(self, pred):
-        return (pred.get_matrix() * self.pos).reduce_int() / self.PN
+        return (pred.get_matrix() * self.pos).reduce_int() / self.PN if self.PN != 0 else 0
 
     def neg_coverage(self, pred):
-        return (pred.get_matrix() * self.neg).reduce_int() / self.NN
+        return (pred.get_matrix() * self.neg).reduce_int() / self.NN if self.NN != 0 else 0
 
     def check_correctness(self, pred):
         """Determine if the prediction is correct based on coverage metrics.

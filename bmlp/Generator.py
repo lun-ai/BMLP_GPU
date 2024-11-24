@@ -66,7 +66,7 @@ class Generator:
                     self.redundancy += 1
 
         # Apply binary operators to every matrix and the rest
-        for i in range(len(self.predicates) - 1):
+        for i in range(self.num_new_predicate - 1):
             for j in range(i + 1, len(self.predicates)):
                 for binary_op in self.binary_ops:
                     fst_pred = self.predicates[i]

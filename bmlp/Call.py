@@ -1,8 +1,7 @@
 from .Matrix import *
 
+
 # V and T are the input matrices, e.g. metabolite medium and gene knockout conditions
-
-
 def BMLP_IE_gpu(R1_path, R2_path, V_path, T_path, P_name, Res_path):
 
     # Load datasets stored in SuiteSparse binary format

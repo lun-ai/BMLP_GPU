@@ -8,9 +8,7 @@ channels:
 dependencies:
   - python
   - cudf
+  - cudatoolkit
   - pygraphblas  # PyGraphBLAS from conda-forge
   - ipykernel
   - pip
-  - pip:
-      - pygraphblas  # Ensures latest pygraphblas is installed via pip (if not in conda)
-      

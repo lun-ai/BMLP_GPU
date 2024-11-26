@@ -1,4 +1,4 @@
-name: gpu-env
+name: bmlp
 channels:
   - nvidia 
   - conda-forge

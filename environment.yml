@@ -6,7 +6,7 @@ channels:
   - defaults
 
 dependencies:
-  - python
+  - python >= 3.9
   - cudf
   - cudatoolkit
   - pygraphblas  # PyGraphBLAS from conda-forge

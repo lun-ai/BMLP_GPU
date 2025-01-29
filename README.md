@@ -24,7 +24,7 @@ BMLP-GPU requires the following packages to be installed in a conda environment:
 To create a conda environment with above packages:
 ```
 conda env create -f environment.yml
-conda activate gpu-env
+conda activate bmlp
 ```
 
 ## Calling from SWI-Prolog

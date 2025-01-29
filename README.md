@@ -1,5 +1,5 @@
 ## Installation
-Follow the steps to install and run BMLP-GPU.
+BMLP-GPU is usable both from Python and SWI-Prolog.
 
 ### Conda installation
 Download conda ([Anaconda](https://www.anaconda.com/download/)) for your device. Then run in terminal, e.g.
@@ -7,11 +7,11 @@ Download conda ([Anaconda](https://www.anaconda.com/download/)) for your device.
 bash Anaconda-latest-Linux-x86_64.sh
 conda list
 ```
-To confirm installation success, you should see the list of install conda packages. 
+To confirm installation success, you should see the list of installed conda packages. 
 
 #### Dependency
 
-BMLP-GPU requires the following packages to be installed in a conda environment:
+BMLP-GPU requires the following packages in a conda environment:
 - conda
 - python
   - cudf
@@ -24,8 +24,16 @@ BMLP-GPU requires the following packages to be installed in a conda environment:
 To create a conda environment with above packages:
 ```
 conda env create -f environment.yml
-conda activate bmlp
+conda activate gpu-env
 ```
+
+## Examples
+Two BMLP modules RMS and SMP [1] are in bmlp.py.
+
+See the list of linear algebra operations supported by PyGraphBLAS in bmlp.py.
+
+## Calling from Python
+Please see examples for calling RMS and SMP modules in examples.ipynb.
 
 ## Calling from SWI-Prolog
 
@@ -40,17 +48,16 @@ a(16).  4|              1|  4
             0  1  2  3  4
 ```
 
-On one terminal, create a Python server for SWI-Prolog clients.
+On a terminal session, create a Python server for SWI-Prolog clients.
 ``` 
 python -m bmlp.swipl_server
 ```
-On another terminal, create a SWI-Prolog client.
+On another terminal, create a SWI-Prolog client (alternatively, you can consult swipl_client.pl in your source code).
 ```
 swipl bmlp/swipl_client.pl
 ```
-Note: alternatively, you can use the swipl_client.pl module in your source code.
 
-Then, on the SWI-Prolog Client side, request the conversion from integers in test.pl to a graphBLAS sparse matrix. The converted matrix is stored by the python variable 'a'.
+On the SWI-Prolog client side, request the conversion from integers in test.pl to a graphBLAS sparse matrix. The converted matrix is stored by the python variable 'a'.
 ```
 ?- run_python_command("import bmlp.Matrix", Res).
 ?- run_python_command("a = bmlp.Matrix.integers_to_boolean_matrix('test.pl')", Res).
@@ -76,10 +83,7 @@ a(15).  3|  1  1  1  1   |  3
 a(16).  4|              1|  4
             0  1  2  3  4
 ```
-  
 
+## References
 
-## Source code
-Two modules BMLP-RMS and BMLP-SMP are implemented in bmlp.py.
-
-See the list of linear algebra operations supported by PyGraphBLAS in bmlp.py.
+[1] Ai, Lun, and Stephen H. Muggleton. ‘Boolean Matrix Logic Programming’. arXiv, 19 August 2024. https://doi.org/10.48550/arXiv.2408.10369.

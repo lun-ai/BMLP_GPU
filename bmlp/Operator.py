@@ -42,7 +42,7 @@ class InvOp(UnaryOp):
 class NegOp(UnaryOp):
     def apply(self, pred: Predicate, syms: Symbols) -> Predicate:
         new_sym = syms.next_symbol()
-        return Predicate(matrix_negate(pred.get_matrix()), new_sym,
+        return Predicate(negate(pred.get_matrix()), new_sym,
                          expr=f'{new_sym}(X, Y) :- not{pred.get_name()}(X, Y).\n{pred}')
 
 
@@ -81,7 +81,7 @@ class RecursOp1(BinaryOp):
         # # Too general, skip generalisations
         # if pred1.get_negative_score() > 0:
         #     return None
-        return Predicate(BMLP_RMS(pred1.get_matrix(), pred2.get_matrix()), new_sym,
+        return Predicate(RMS(pred1.get_matrix(), pred2.get_matrix()), new_sym,
                          expr=f"{new_sym}(X, Y) :- {pred1.get_name()}(X, Y).\n{new_sym}(X, Y) :- {pred2.get_name()}(X, Z), {new_sym}(Z, Y).\n{pred1}{pred2}")
 
 
@@ -92,7 +92,7 @@ class RecursOp2(BinaryOp):
         # if pred2.get_negative_score() > 0:
         #     return None
         return Predicate(
-            BMLP_RMS(pred2.get_matrix(), pred1.get_matrix()), new_sym,
+            RMS(pred2.get_matrix(), pred1.get_matrix()), new_sym,
             expr=f"{new_sym}(X, Y) :- {pred2.get_name()}(X, Y).\n{new_sym}(X, Y) :- {pred1.get_name()}(X, Z), {new_sym}(Z, Y).\n{pred1}{pred2}",
         )
 
@@ -104,7 +104,7 @@ class RecursOpSelf(UnaryOp):
         # if pred.get_negative_score() > 0:
         #     return None
         return Predicate(
-            BMLP_RMS(pred.get_matrix(), pred.get_matrix()), new_sym,
+            RMS(pred.get_matrix(), pred.get_matrix()), new_sym,
             expr=f"{new_sym}(X, Y) :- {pred.get_name()}(X, Y).\n{new_sym}(X, Y) :- {pred.get_name()}(X, Z), {new_sym}(Z, Y).\n{pred}",
         )
 

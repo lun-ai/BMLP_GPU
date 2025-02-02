@@ -1,6 +1,6 @@
 import pygraphblas as gb
 import unittest
-from bmlp import Matrix, Predicate, Task, Generator, Learn
+from bmlp import Matrix, Predicate, Task, Generator, Learn, Utils
 
 
 class BMLPTests(unittest.TestCase):
@@ -9,7 +9,7 @@ class BMLPTests(unittest.TestCase):
 
         # Test Prolog to BMLP-GPU conversion
         # Load a .pl file containing rows of a boolean matrix
-        a = Matrix.integers_to_boolean_matrix("bmlp/load_pl_test.pl")
+        a = Utils.integers_to_boolean_matrix("bmlp/load_pl_test.pl")
 
         self.assertEqual(a[0, 1], True)
         self.assertEqual(a[1, 2], True)
@@ -35,13 +35,13 @@ class BMLPTests(unittest.TestCase):
 
         # Test Prolog to BMLP-GPU conversion
         # Load a .pl file containing rows of a boolean matrix
-        a = Matrix.integers_to_boolean_matrix("bmlp/load_pl_test.pl")
+        a = Utils.integers_to_boolean_matrix("bmlp/load_pl_test.pl")
 
         # Create a copy of this boolean matrix
         b = a
 
         # Save this copy into a .pl file and rename the predicate
-        Matrix.boolean_matrix_to_integers(b, "b", "bmlp/output.pl")
+        Utils.boolean_matrix_to_integers(b, "b", "bmlp/output.pl")
 
     def test_simple_chain(self):
 
@@ -75,7 +75,7 @@ class BMLPTests(unittest.TestCase):
         for src, dst in edges:
             R1[src, dst] = True
 
-        res = Matrix.BMLP_RMS(R1)
+        res = Matrix.RMS(R1)
 
         self.assertEqual(res[0, 1], True)
         self.assertEqual(res[0, 2], True)
@@ -100,7 +100,7 @@ class BMLPTests(unittest.TestCase):
         for src, dst in edges:
             R1[src, dst] = True
 
-        res = Matrix.BMLP_RMS(R1, R1)
+        res = Matrix.RMS(R1, R1)
 
         self.assertEqual(res[0, 1], True)
         self.assertEqual(res[0, 2], True)
@@ -129,7 +129,7 @@ class BMLPTests(unittest.TestCase):
         for src, dst in edges:
             R2[src, dst] = True
 
-        res = Matrix.BMLP_RMS(R1, R2)
+        res = Matrix.RMS(R1, R2)
 
         self.assertEqual(res[0, 2], True)
         self.assertEqual(res[0, 3], True)
@@ -160,7 +160,7 @@ class BMLPTests(unittest.TestCase):
         p3[4, 0] = True
 
         # exactly-two-connected recursion in chained H2m
-        res = Matrix.BMLP_RMS(p1.T, p2 @ p3)
+        res = Matrix.RMS(p1.T, p2 @ p3)
 
         self.assertEqual(res[0, 1], True)
         self.assertEqual(res[1, 1], True)
@@ -184,7 +184,7 @@ class BMLPTests(unittest.TestCase):
         # query the reachability of node 3
         V[3] = True
 
-        res = Matrix.BMLP_SMP(V, R1)
+        res = Matrix.SMP(V, R1)
 
         self.assertEqual(res[0], True)
         self.assertEqual(res[1], True)
@@ -220,7 +220,7 @@ class BMLPTests(unittest.TestCase):
         V[0, 0] = True
         V[1, 1] = True
 
-        res, _ = Matrix.BMLP_IE(V, R1, R2)
+        res, _ = Matrix.IE(V, R1, R2)
 
         self.assertEqual(res[0, 0], True)
         self.assertEqual(res[0, 1], True)
@@ -265,7 +265,7 @@ class BMLPTests(unittest.TestCase):
         T[0, 0] = True
         T[0, 2] = True
 
-        res, _ = Matrix.BMLP_IE(V, R1, R2, T)
+        res, _ = Matrix.IE(V, R1, R2, T)
 
         self.assertEqual(res[0, 0], True)
         self.assertEqual(res[0, 1], False)
@@ -311,7 +311,7 @@ class BMLPTests(unittest.TestCase):
         # Filter the first row in the matrix
         T[1, 0] = True
 
-        res, _ = Matrix.BMLP_IE(V, R1, R2, T)
+        res, _ = Matrix.IE(V, R1, R2, T)
 
         self.assertEqual(res[0, 0], True)
         self.assertEqual(res[0, 1], True)
@@ -363,7 +363,7 @@ class BMLPTests(unittest.TestCase):
         T[1, 1] = True
         T[1, 2] = True
 
-        res, _ = Matrix.BMLP_IE(V, R1, R2, T)
+        res, _ = Matrix.IE(V, R1, R2, T)
 
         self.assertEqual(res[0, 0], True)
         self.assertEqual(res[0, 1], True)

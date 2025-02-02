@@ -31,7 +31,7 @@ for i in range(num_reps):
 
     # Run and time the BMLP-RMS module
     start_time = time.time()
-    BMLP_RMS(R1)
+    RMS(R1)
     end_time = time.time()
 
     total_time.append(end_time - start_time)

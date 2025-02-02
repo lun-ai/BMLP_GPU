@@ -1,6 +1,7 @@
 import pygraphblas as gb
 from bmlp.Matrix import *
 from bmlp.Call import *
+from bmlp.Utils import *
 import time
 
 
@@ -15,7 +16,7 @@ def test_bmlp_ie_demo_bio_db():
     T = integers_to_boolean_matrix("demo/mstate2")
 
     # Run BMLP-IE
-    res, _ = BMLP_IE(V, R1, R2, T=T)
+    res, _ = IE(V, R1, R2, T=T)
 
     # Save computed result to local
     boolean_matrix_to_integers(res, "mstate10", "demo/mstate10")
@@ -32,7 +33,7 @@ def test_bmlp_ie_demo_bio_db_from_bin():
     T = integers_to_boolean_matrix("demo/mstate2")
 
     # Run BMLP-IE
-    res, _ = BMLP_IE(V, R1, R2, T=T, localised=True)
+    res, _ = IE(V, R1, R2, T=T, localised=True)
 
     # Save computed result to local
     boolean_matrix_to_integers(res, "mstate10", "demo/mstate10")
@@ -43,5 +44,5 @@ if __name__ == '__main__':
     # test_bmlp_ie_demo_bio_db_from_bin()
 
     # integers_to_boolean_matrix("demo/mstate2_500")
-    BMLP_IE_gpu("demo/reactant_mat_bin", "demo/product_mat_bin",
+    IE_from_bin("demo/reactant_mat_bin", "demo/product_mat_bin",
                 "demo/mstate5_500", "demo/mstate2_500", "mstate10", "demo/mstate10")

@@ -37,45 +37,29 @@ from .Utils import *
 # A >= B	Compare Element-Wise Union	type default GE operator
 
 
-# Write graphBLAS matrix as a set of integers in a prolog file
-def boolean_matrix_to_integers(matrix: Matrix.sparse, name, path):
-
-    with open(path, 'w') as prolog:
-        for i in range(matrix.nrows):
-
-            out = 0
-            for j in range(matrix.ncols - 1, -1, -1):
-
-                # sparse matrix elements can be empty bits
-                element: BOOL = matrix.get(i, j)
-                out = (out << 1) | element if element else (out << 1)
-
-            prolog.write('%s(%s,%s).\n' % (name, i, out))
+# Multiply two sparse matrices
+def mul(M1: Matrix.sparse, M2: Matrix.sparse):
+    return M1 @ M2
 
 
-# From a path to a prolog file containing a boolean matrix
-# convert it into a graphBLAS matrix for computation
-def integers_to_boolean_matrix(path, is_squared=False):
+# Add two sparse matrices
+def add(M1: Matrix.sparse, M2: Matrix.sparse):
+    return M1 + M2
 
-    bitcodes, nrows, ncols = parse_prolog_binary_codes(path)
 
-    if is_squared:
-        dim = max(nrows, ncols)
-        matrix = Matrix.sparse(BOOL, dim, dim)
-    else:
-        matrix = Matrix.sparse(BOOL, nrows, ncols)
+# Transpose a sparse matrix
+def transpose(M: Matrix.sparse):
+    return M.T
 
-    for row in range(len(bitcodes)):
-        for col in range(len(bitcodes[row])):
 
-            if bitcodes[row][col]:
-                matrix[row, col] = True
-
-    return matrix
+# Add an identity matrix to a square sparse matrix
+def addI(M: Matrix.sparse):
+    assert M.nrows == M.ncols
+    return M + identity(M.nrows)
 
 
 # Negate elements in a sparse matrix by treating empty cells as 'False'
-def matrix_negate(M: Matrix.sparse):
+def negate(M: Matrix.sparse):
 
     # Create an iso mask of default 'False' values
     OR = Matrix.iso(False, M.nrows, M.ncols)
@@ -92,7 +76,7 @@ def identity(dim):
     return I
 
 
-def BMLP_RMS(P1, P2=None, print_matrix=False):
+def RMS(P1, P2=None, print_matrix=False):
     """GraphBLAS version of BMLP-RMS algorithm which performs repeated matrix squaring
 
         P0, P1 and P2 are boolean matrices representing the following predicates.
@@ -141,7 +125,7 @@ def BMLP_RMS(P1, P2=None, print_matrix=False):
 
 
 # GraphBLAS version of BMLP-SMP algorithm which performs vector multiplication
-def BMLP_SMP(V, R1, print_matrix=False):
+def SMP(V, R1, print_matrix=False):
 
     # Push the model subset selection into the summation for improved performance
     V_ = V
@@ -164,8 +148,8 @@ def BMLP_SMP(V, R1, print_matrix=False):
     return res
 
 
-def BMLP_IE(V: Matrix.sparse, R1: Matrix.sparse, R2: Matrix.sparse, T: Matrix.sparse = None,
-            localised=False, print_matrix=False) -> Matrix.sparse:
+def IE(V: Matrix.sparse, R1: Matrix.sparse, R2: Matrix.sparse, T: Matrix.sparse = None,
+       localised=False, print_matrix=False) -> Matrix.sparse:
     """GraphBLAS version of BMLP-IE algorithm
         which performs matrix operations using two input matrices
         of dimension k x n.
@@ -222,8 +206,8 @@ def BMLP_IE(V: Matrix.sparse, R1: Matrix.sparse, R2: Matrix.sparse, T: Matrix.sp
         # Negate the V matrix while keeping it sparse to find all R1 rows that are not subsets
         # This can be done with sparse matrix mul without require union matrix-matrix mul
         # start_time = time.time()
-        V_ = matrix_negate(V) @ R1
-        V_ = matrix_negate(V_)
+        V_ = negate(V) @ R1
+        V_ = negate(V_)
         # total_time += time.time() - start_time
 
         # Multiply with rows in R2 filtered by T and update

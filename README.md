@@ -59,18 +59,19 @@ swipl bmlp/swipl_client.pl
 
 On the SWI-Prolog client side, request the conversion from integers in test.pl to a graphBLAS sparse matrix. The converted matrix is stored by the python variable 'a'.
 ```
-?- run_python_command("import bmlp.Matrix", Res).
-?- run_python_command("a = bmlp.Matrix.integers_to_boolean_matrix('test.pl')", Res).
+?- run_python_command("import bmlp.Utils", Res).
+?- run_python_command("a = bmlp.Utils.integers_to_boolean_matrix('test.pl')", Res).
 ```
 
-Now, we call BMLP_RMS to compute the transitive closure taking a single matrix argument. Here we input 'a'. The computed result is assigned to 'a' again.
+Now, we call RMS to compute the transitive closure taking a single matrix argument. Here we input 'a'. The computed result is assigned to 'a' again.
 ```
-?- run_python_command("a = bmlp.Matrix.BMLP_RMS(a)", Res).
+?- run_python_command("import bmlp.Matrix", Res).
+?- run_python_command("a = bmlp.Matrix.RMS(a)", Res).
 ```
 
 The final step is to convert the graphBLAS sparse matrix back to SWI-Prolog. The first argument is a graphBLAS matrix, the second argument is the name of the new predicate, the third argument is the file location where the set of clauses will be saved into. 
 ```
-?- run_python_command("a = bmlp.Matrix.boolean_matrix_to_integers(a,'a','output.pl')", Res).
+?- run_python_command("a = bmlp.Utils.boolean_matrix_to_integers(a,'a','output.pl')", Res).
 ```
 
 The output.pl file now contains clauses that represent the transitive closure boolean matrix.

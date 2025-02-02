@@ -1,8 +1,9 @@
 from .Matrix import *
+from .Utils import *
 
 
 # V and T are the input matrices, e.g. metabolite medium and gene knockout conditions
-def BMLP_IE_gpu(R1_path, R2_path, V, T, P_name='', Res_path=''):
+def IE_from_bin(R1_path, R2_path, V, T, P_name='', Res_path=''):
 
     # Load datasets stored in SuiteSparse binary format
     R1 = R1_path
@@ -14,12 +15,12 @@ def BMLP_IE_gpu(R1_path, R2_path, V, T, P_name='', Res_path=''):
         T_m = integers_to_boolean_matrix(T)
 
         # Run BMLP-IE
-        res, _ = BMLP_IE(V_m, R1, R2, T=T_m, localised=True)
+        res, _ = IE(V_m, R1, R2, T=T_m, localised=True)
 
         # Save computed result to result path
         boolean_matrix_to_integers(res, P_name, Res_path)
         return None
     else:
         # Run BMLP-IE
-        res, _ = BMLP_IE(V, R1, R2, T=T, localised=True)
+        res, _ = IE(V, R1, R2, T=T, localised=True)
         return res

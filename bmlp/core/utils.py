@@ -1,8 +1,7 @@
 from pygraphblas import Matrix, types, Vector, BOOL
 
+
 # Parse a boolean matrix from Prolog version of BMLP which has integers as rows
-
-
 def parse_prolog_binary_codes(path):
 
     codes = []

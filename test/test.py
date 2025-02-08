@@ -1,6 +1,7 @@
 import pygraphblas as gb
 import unittest
-from bmlp import Matrix, Predicate, Task, Generator, Learn, Utils
+from core import matrix, utils
+from learn import predicate, task, generator, learn
 
 
 class BMLPTests(unittest.TestCase):
@@ -9,7 +10,7 @@ class BMLPTests(unittest.TestCase):
 
         # Test Prolog to BMLP-GPU conversion
         # Load a .pl file containing rows of a boolean matrix
-        a = Utils.integers_to_boolean_matrix("bmlp/load_pl_test.pl")
+        a = utils.integers_to_boolean_matrix("test/int_matrix.pl")
 
         self.assertEqual(a[0, 1], True)
         self.assertEqual(a[1, 2], True)
@@ -21,27 +22,39 @@ class BMLPTests(unittest.TestCase):
 
         # Test Prolog to BMLP-GPU conversion
         # Load a .pl file containing rows of a boolean matrix
-        a = Matrix.integers_to_boolean_matrix(
-            "bmlp/load_pl_test.pl", is_squared=True)
+        a = matrix.integers_to_boolean_matrix(
+            "test/int_matrix.pl", is_squared=True)
 
         self.assertEqual(a[0, 1], True)
         self.assertEqual(a[1, 2], True)
         self.assertEqual(a[2, 3], True)
         self.assertEqual(a[3, 0], True)
         self.assertEqual(a[4, 4], True)
-        self.assertEqual(a.nrows, 6)
+        self.assertEqual(a.nrows, 5)
 
     def test_save_pl(self):
 
         # Test Prolog to BMLP-GPU conversion
         # Load a .pl file containing rows of a boolean matrix
-        a = Utils.integers_to_boolean_matrix("bmlp/load_pl_test.pl")
+        a = utils.integers_to_boolean_matrix("test/int_matrix.pl")
 
         # Create a copy of this boolean matrix
         b = a
 
         # Save this copy into a .pl file and rename the predicate
-        Utils.boolean_matrix_to_integers(b, "b", "bmlp/output.pl")
+        utils.boolean_matrix_to_integers(b, "b", "test/output1.pl")
+
+    def test_run_and_save_pl(self):
+
+        # Test Prolog to BMLP-GPU conversion
+        # Load a .pl file containing rows of a boolean matrix
+        a = utils.integers_to_boolean_matrix("test/int_matrix.pl")
+
+        # Create a copy of this boolean matrix
+        b = matrix.RMS(a)
+
+        # Save this copy into a .pl file and rename the predicate
+        utils.boolean_matrix_to_integers(b, "b", "test/output2.pl")
 
     def test_simple_chain(self):
 
@@ -75,7 +88,7 @@ class BMLPTests(unittest.TestCase):
         for src, dst in edges:
             R1[src, dst] = True
 
-        res = Matrix.RMS(R1)
+        res = matrix.RMS(R1)
 
         self.assertEqual(res[0, 1], True)
         self.assertEqual(res[0, 2], True)
@@ -100,7 +113,7 @@ class BMLPTests(unittest.TestCase):
         for src, dst in edges:
             R1[src, dst] = True
 
-        res = Matrix.RMS(R1, R1)
+        res = matrix.RMS(R1, R1)
 
         self.assertEqual(res[0, 1], True)
         self.assertEqual(res[0, 2], True)
@@ -129,7 +142,7 @@ class BMLPTests(unittest.TestCase):
         for src, dst in edges:
             R2[src, dst] = True
 
-        res = Matrix.RMS(R1, R2)
+        res = matrix.RMS(R1, R2)
 
         self.assertEqual(res[0, 2], True)
         self.assertEqual(res[0, 3], True)
@@ -160,7 +173,7 @@ class BMLPTests(unittest.TestCase):
         p3[4, 0] = True
 
         # exactly-two-connected recursion in chained H2m
-        res = Matrix.RMS(p1.T, p2 @ p3)
+        res = matrix.RMS(p1.T, p2 @ p3)
 
         self.assertEqual(res[0, 1], True)
         self.assertEqual(res[1, 1], True)
@@ -184,7 +197,7 @@ class BMLPTests(unittest.TestCase):
         # query the reachability of node 3
         V[3] = True
 
-        res = Matrix.SMP(V, R1)
+        res = matrix.SMP(V, R1)
 
         self.assertEqual(res[0], True)
         self.assertEqual(res[1], True)
@@ -220,7 +233,7 @@ class BMLPTests(unittest.TestCase):
         V[0, 0] = True
         V[1, 1] = True
 
-        res, _ = Matrix.IE(V, R1, R2)
+        res, _ = matrix.IE(V, R1, R2)
 
         self.assertEqual(res[0, 0], True)
         self.assertEqual(res[0, 1], True)
@@ -265,7 +278,7 @@ class BMLPTests(unittest.TestCase):
         T[0, 0] = True
         T[0, 2] = True
 
-        res, _ = Matrix.IE(V, R1, R2, T)
+        res, _ = matrix.IE(V, R1, R2, T)
 
         self.assertEqual(res[0, 0], True)
         self.assertEqual(res[0, 1], False)
@@ -311,7 +324,7 @@ class BMLPTests(unittest.TestCase):
         # Filter the first row in the matrix
         T[1, 0] = True
 
-        res, _ = Matrix.IE(V, R1, R2, T)
+        res, _ = matrix.IE(V, R1, R2, T)
 
         self.assertEqual(res[0, 0], True)
         self.assertEqual(res[0, 1], True)
@@ -363,7 +376,7 @@ class BMLPTests(unittest.TestCase):
         T[1, 1] = True
         T[1, 2] = True
 
-        res, _ = Matrix.IE(V, R1, R2, T)
+        res, _ = matrix.IE(V, R1, R2, T)
 
         self.assertEqual(res[0, 0], True)
         self.assertEqual(res[0, 1], True)
@@ -407,22 +420,22 @@ class BMLPTests(unittest.TestCase):
         m1 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m1[0, 1] = True
         m1[0, 2] = True
-        father = Predicate.new_predicate(m1, "father")
+        father = predicate.new_predicate(m1, "father")
 
         m2 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m2[3, 1] = True
         m2[3, 2] = True
-        mother = Predicate.new_predicate(m2, "mother")
+        mother = predicate.new_predicate(m2, "mother")
 
         m3 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m3[0, 0] = True
         m3[1, 1] = True
-        male = Predicate.new_predicate(m3, "male")
+        male = predicate.new_predicate(m3, "male")
 
         m4 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m4[2, 2] = True
         m4[3, 3] = True
-        female = Predicate.new_predicate(m4, "female")
+        female = predicate.new_predicate(m4, "female")
 
         pos = gb.Matrix.sparse(gb.BOOL, 64, 64)
         pos[0, 1] = True
@@ -435,14 +448,14 @@ class BMLPTests(unittest.TestCase):
         neg[2, 1] = True
         neg[0, 0] = True
 
-        learn_parent = Task.new_task(pos, neg)
+        learn_parent = task.new_task(pos, neg)
 
         # Primitive predicates are the depth 1 predicates
         primitives = [father, mother, male, female]
 
         # Define a generator using default operators
-        generator = Generator.Generator(primitives)
-        success, prog, _ = generator.invent_predicates_for_task(learn_parent)
+        gen = generator.Generator(primitives)
+        success, prog, _ = gen.invent_predicates_for_task(learn_parent)
 
         self.assertTrue(success)
         # self.assertEqual(
@@ -484,25 +497,25 @@ class BMLPTests(unittest.TestCase):
         m1[0, 1] = True
         m1[0, 2] = True
         m1[1, 4] = True
-        father = Predicate.new_predicate(m1, "father")
+        father = predicate.new_predicate(m1, "father")
 
         m2 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m2[3, 1] = True
         m2[3, 2] = True
         m2[2, 5] = True
-        mother = Predicate.new_predicate(m2, "mother")
+        mother = predicate.new_predicate(m2, "mother")
 
         m3 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m3[0, 0] = True
         m3[1, 1] = True
         m3[4, 4] = True
-        male = Predicate.new_predicate(m3, "male")
+        male = predicate.new_predicate(m3, "male")
 
         m4 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m4[2, 2] = True
         m4[3, 3] = True
         m4[5, 5] = True
-        female = Predicate.new_predicate(m4, "female")
+        female = predicate.new_predicate(m4, "female")
 
         # Postive examples
         pos = gb.Matrix.sparse(gb.BOOL, 64, 64)
@@ -518,19 +531,19 @@ class BMLPTests(unittest.TestCase):
         neg[0, 0] = True
         neg[1, 4] = True
 
-        learn_grandparent = Task.new_task(pos, neg)
+        learn_grandparent = task.new_task(pos, neg)
 
         primitives = [father, mother, male, female]
-        generator = Generator.Generator(primitives)
+        gen = generator.Generator(primitives)
         cached = {}
 
         # Generate predicates
-        success, _, size_2 = generator.invent_predicates_for_task(
+        success, _, size_2 = gen.invent_predicates_for_task(
             learn_grandparent, cached)
 
         # Generate more predicates
-        generator.update_predicates(len(size_2), size_2 + primitives)
-        success, prog, _ = generator.invent_predicates_for_task(
+        gen.update_predicates(len(size_2), size_2 + primitives)
+        success, prog, _ = gen.invent_predicates_for_task(
             learn_grandparent, cached)
 
         self.assertTrue(success)
@@ -573,25 +586,25 @@ class BMLPTests(unittest.TestCase):
         m1[0, 1] = True
         m1[0, 2] = True
         m1[1, 4] = True
-        father = Predicate.new_predicate(m1, "father")
+        father = predicate.new_predicate(m1, "father")
 
         m2 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m2[3, 1] = True
         m2[3, 2] = True
         m2[2, 5] = True
-        mother = Predicate.new_predicate(m2, "mother")
+        mother = predicate.new_predicate(m2, "mother")
 
         m3 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m3[0, 0] = True
         m3[1, 1] = True
         m3[4, 4] = True
-        male = Predicate.new_predicate(m3, "male")
+        male = predicate.new_predicate(m3, "male")
 
         m4 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m4[2, 2] = True
         m4[3, 3] = True
         m4[5, 5] = True
-        female = Predicate.new_predicate(m4, "female")
+        female = predicate.new_predicate(m4, "female")
 
         # Postive examples
         pos = gb.Matrix.sparse(gb.BOOL, 64, 64)
@@ -609,7 +622,7 @@ class BMLPTests(unittest.TestCase):
 
         primitives = [father, mother, male, female]
 
-        prog = Learn.learn_task(pos, neg, primitives, verbose=False)
+        prog = learn.learn_task(pos, neg, primitives, verbose=False)
 
         self.assertEqual(prog[0].get_scores(), (1.0, 0.0))
 
@@ -655,25 +668,25 @@ class BMLPTests(unittest.TestCase):
         m1[0, 2] = True
         m1[1, 4] = True
         m1[4, 6] = True
-        father = Predicate.new_predicate(m1, "father")
+        father = predicate.new_predicate(m1, "father")
 
         m2 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m2[3, 1] = True
         m2[3, 2] = True
         m2[2, 5] = True
-        mother = Predicate.new_predicate(m2, "mother")
+        mother = predicate.new_predicate(m2, "mother")
 
         m3 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m3[0, 0] = True
         m3[1, 1] = True
         m3[4, 4] = True
-        male = Predicate.new_predicate(m3, "male")
+        male = predicate.new_predicate(m3, "male")
 
         m4 = gb.Matrix.sparse(gb.BOOL, 64, 64)
         m4[2, 2] = True
         m4[3, 3] = True
         m4[5, 5] = True
-        female = Predicate.new_predicate(m4, "female")
+        female = predicate.new_predicate(m4, "female")
 
         # Postive examples
         pos = gb.Matrix.sparse(gb.BOOL, 64, 64)
@@ -693,7 +706,7 @@ class BMLPTests(unittest.TestCase):
 
         primitives = [father, mother, male, female]
 
-        prog = Learn.learn_task(pos, neg, primitives, verbose=False)
+        prog = learn.learn_task(pos, neg, primitives, verbose=False)
         self.assertEqual(prog[0].get_scores(), (1.0, 0.0))
 
 

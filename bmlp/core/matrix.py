@@ -2,7 +2,7 @@ from pygraphblas import Matrix, types, Vector, BOOL
 import numpy as np
 import time
 
-from .Utils import *
+from .utils import *
 
 # Use python wrapper of GraphBLAS on GPU (BLAS - Basic Linear Algebra Subprograms)
 # GraphBLAS supports graph operations via linear algebraic methods (e.g. matrix multiplication) over various semirings

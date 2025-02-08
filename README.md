@@ -37,7 +37,7 @@ Please see examples for calling RMS and SMP modules in examples.ipynb.
 
 ## Calling from SWI-Prolog
 
-As an example, the following clauses in the test.pl file describe rows in a boolean matrix, we show how to use BMLP-GPU to compute its transitive closure.
+As an example, the following clauses in the test/int_matrix.pl file describe rows in a boolean matrix, we show how to use BMLP-GPU to compute its transitive closure.
 ```
             0  1  2  3  4
 a(2).   0|     1         |  0
@@ -50,28 +50,28 @@ a(16).  4|              1|  4
 
 On a terminal session, create a Python server for SWI-Prolog clients.
 ``` 
-python -m bmlp.swipl_server
+python -m bmlp.service.swipl_server
 ```
 On another terminal, create a SWI-Prolog client (alternatively, you can consult swipl_client.pl in your source code).
 ```
-swipl bmlp/swipl_client.pl
+swipl bmlp/service/swipl_client.pl
 ```
 
-On the SWI-Prolog client side, request the conversion from integers in test.pl to a graphBLAS sparse matrix. The converted matrix is stored by the python variable 'a'.
+On the SWI-Prolog client side, request the conversion from integers in test/int_matrix.pl to a graphBLAS sparse matrix. The converted matrix is stored by the python variable 'a'.
 ```
-?- run_python_command("import bmlp.Utils", Res).
-?- run_python_command("a = bmlp.Utils.integers_to_boolean_matrix('test.pl')", Res).
+?- run_python_command("import bmlp.core.utils", Res).
+?- run_python_command("a = bmlp.core.utils.integers_to_boolean_matrix('test/int_matrix.pl')", Res).
 ```
 
 Now, we call RMS to compute the transitive closure taking a single matrix argument. Here we input 'a'. The computed result is assigned to 'a' again.
 ```
-?- run_python_command("import bmlp.Matrix", Res).
-?- run_python_command("a = bmlp.Matrix.RMS(a)", Res).
+?- run_python_command("import bmlp.core.matrix", Res).
+?- run_python_command("a = bmlp.core.matrix.RMS(a)", Res).
 ```
 
 The final step is to convert the graphBLAS sparse matrix back to SWI-Prolog. The first argument is a graphBLAS matrix, the second argument is the name of the new predicate, the third argument is the file location where the set of clauses will be saved into. 
 ```
-?- run_python_command("a = bmlp.Utils.boolean_matrix_to_integers(a,'a','output.pl')", Res).
+?- run_python_command("a = bmlp.core.utils.boolean_matrix_to_integers(a,'a','test/output.pl')", Res).
 ```
 
 The output.pl file now contains clauses that represent the transitive closure boolean matrix.

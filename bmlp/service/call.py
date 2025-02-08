@@ -1,5 +1,5 @@
-from .Matrix import *
-from .Utils import *
+from ..core.matrix import *
+from ..core.utils import *
 
 
 # V and T are the input matrices, e.g. metabolite medium and gene knockout conditions

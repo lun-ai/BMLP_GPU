@@ -1,8 +1,8 @@
 
 from abc import ABC, abstractmethod
 from typing import Any, Optional
-from .Predicate import *
-from .Operator import UnaryOp, BinaryOp
+from .predicate import *
+from .operator import UnaryOp, BinaryOp
 
 
 class Expression(ABC):

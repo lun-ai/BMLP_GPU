@@ -1,5 +1,5 @@
-from .Operator import *
-from .Task import *
+from .operator import *
+from .task import *
 import time
 
 

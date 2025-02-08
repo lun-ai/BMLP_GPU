@@ -1,5 +1,5 @@
-from .Generator import *
-from .Task import Task
+from .generator import *
+from .task import Task
 import cupy as cp
 
 cp.random.seed(0)

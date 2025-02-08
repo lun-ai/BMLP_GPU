@@ -1,4 +1,4 @@
-from .Predicate import *
+from .predicate import *
 
 
 class Task:

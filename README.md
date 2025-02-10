@@ -12,7 +12,6 @@ To confirm installation success, you should see the list of installed conda pack
 #### Dependency
 
 BMLP-GPU requires the following packages in a conda environment:
-- conda
 - python
   - cudf
   - cugraph 
@@ -24,7 +23,7 @@ BMLP-GPU requires the following packages in a conda environment:
 To create a conda environment with above packages:
 ```
 conda env create -f environment.yml
-conda activate gpu-env
+conda activate bmlp
 ```
 
 ## Examples

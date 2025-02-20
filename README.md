@@ -14,9 +14,9 @@ To confirm installation success, you should see the list of installed conda pack
 BMLP-GPU requires the following packages in a conda environment:
 - conda
 - python
-  - cudf
   - cugraph 
   - pygraphblas
+  - cudf (optional for pandas with GPU)
   - ipykernel (optional for running Jupyter notebook)
   - graphviz (optional for visualising graphs)
 

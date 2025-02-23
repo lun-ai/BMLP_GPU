@@ -9,7 +9,7 @@ def IE_from_bin(R1_path, R2_path, V, T, P_name='', Res_path=''):
     R1 = R1_path
     R2 = R2_path
 
-    # Load inputs
+    # Load inputs from .pl file containing rows of integers encoding of matrices
     if P_name != '' and Res_path != '':
         V_m = integers_to_boolean_matrix(V)
         T_m = integers_to_boolean_matrix(T)

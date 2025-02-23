@@ -178,11 +178,19 @@ def IE(V: Matrix.sparse, R1: Matrix.sparse, R2: Matrix.sparse, T: Matrix.sparse 
     # then R1 and R2 will be pre-processed as they have the same sizes
     # Otherwise, stored R1 has already been transposed and has a different size.
     else:
-        nrows = R1.nrows
-        ncols = max(R1.ncols, R2.ncols)
-        R1.resize(nrows, ncols)
-        R1 = R1.T
-        R2.resize(nrows, ncols)
+        if R1.ncols == R2.nrows:
+            # R1 is transposed
+            nrows = R1.ncols
+            ncols = max(R1.nrows, R2.ncols)
+        elif R1.nrows == R2.nrows:
+            # R1 is not transposed
+            nrows = R1.nrows
+            ncols = max(R1.ncols, R2.ncols)
+            R1.resize(nrows, ncols)
+            R1 = R1.T
+            R2.resize(nrows, ncols)
+        else:
+            raise ValueError('Matrix dimensions do not match')
 
     # Need to resize matrices to be compatible due to leading zeros
     # Then Pad the input matrix with default 'False' values

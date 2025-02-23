@@ -149,7 +149,7 @@ def SMP(V, R1, print_matrix=False):
 
 
 def IE(V: Matrix.sparse, R1: Matrix.sparse, R2: Matrix.sparse, T: Matrix.sparse = None,
-       localised=False, print_matrix=False) -> Matrix.sparse:
+       localised: bool = False, print_matrix: bool = False):
     """GraphBLAS version of BMLP-IE algorithm
         which performs matrix operations using two input matrices
         of dimension k x n.

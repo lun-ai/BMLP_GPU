@@ -1,5 +1,5 @@
-from core.matrix import *
-from core.utils import *
+from ..core.matrix import *
+from ..core.utils import *
 from cudf import DataFrame
 
 

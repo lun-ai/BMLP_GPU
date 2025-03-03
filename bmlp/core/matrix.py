@@ -1,8 +1,10 @@
-from pygraphblas import Matrix, types, Vector, BOOL
-import numpy as np
-import time
-
 from .utils import *
+import time
+import numpy as np
+import graphblas as gb
+from graphblas import Matrix, Vector, Scalar
+from graphblas import dtypes
+from graphblas import unary, binary, monoid, semiring
 
 # Use python wrapper of GraphBLAS on GPU (BLAS - Basic Linear Algebra Subprograms)
 # GraphBLAS supports graph operations via linear algebraic methods (e.g. matrix multiplication) over various semirings
@@ -38,28 +40,28 @@ from .utils import *
 
 
 # Multiply two sparse matrices
-def mul(M1: Matrix.sparse, M2: Matrix.sparse):
+def mul(M1: Matrix, M2: Matrix):
     return M1 @ M2
 
 
 # Add two sparse matrices
-def add(M1: Matrix.sparse, M2: Matrix.sparse):
+def add(M1: Matrix, M2: Matrix):
     return M1 + M2
 
 
 # Transpose a sparse matrix
-def transpose(M: Matrix.sparse):
+def transpose(M: Matrix):
     return M.T
 
 
 # Add an identity matrix to a square sparse matrix
-def addI(M: Matrix.sparse):
+def addI(M: Matrix):
     assert M.nrows == M.ncols
     return M + identity(M.nrows)
 
 
 # Negate elements in a sparse matrix by treating empty cells as 'False'
-def negate(M: Matrix.sparse):
+def negate(M: Matrix):
 
     # Create an iso mask of default 'False' values
     OR = Matrix.iso(False, M.nrows, M.ncols)
@@ -70,10 +72,15 @@ def negate(M: Matrix.sparse):
 
 # Create an identity matrix
 def identity(dim):
-    I = Matrix.sparse(BOOL, dim, dim)
+    I = Matrix(BOOL, dim, dim)
     for i in range(dim):
         I[i, i] = True
     return I
+
+
+# Create a new matrix
+def new_matrix(nrows, ncols, dtype=gb.dtypes.BOOL):
+    return Matrix.new(dtype, nrows, ncols)
 
 
 def RMS(P1, P2=None, print_matrix=False):
@@ -86,17 +93,17 @@ def RMS(P1, P2=None, print_matrix=False):
         Default p1 and p2 represent the same predicate.
 
     Args:
-        P1 (Matrix.sparse): boolean matrix for the non recursive body p1 or default both p1 and p2
-        P2 (Matrix.sparse, optional): boolean matrix for the recursive body p2 if differs from p1. Defaults to None.
+        P1 (Matrix): boolean matrix for the non recursive body p1 or default both p1 and p2
+        P2 (Matrix, optional): boolean matrix for the recursive body p2 if differs from p1. Defaults to None.
         print_matrix (bool, optional): print trace of fixpoint computation. Defaults to False.
 
     Returns:
-        Matrix.sparse: fixpoint boolean matrix representing predicate p0
+        Matrix: fixpoint boolean matrix representing predicate p0
     """
 
     # the dimensions of the matrix, e.g. the number of nodes in a graph
     dim = P1.nrows
-    empty_matrix = Matrix.sparse(BOOL, dim, dim)
+    empty_matrix = Matrix(BOOL, dim, dim)
 
     # Add identy to the adjacency matrix
     R = identity(dim) + P1 if P2 is None else identity(dim) + P2
@@ -148,7 +155,7 @@ def SMP(V, R1, print_matrix=False):
     return res
 
 
-def IE(V: Matrix.sparse, R1: Matrix.sparse, R2: Matrix.sparse, T: Matrix.sparse = None,
+def IE(V: Matrix, R1: Matrix, R2: Matrix, T: Matrix = None,
        localised: bool = False, print_matrix: bool = False):
     """GraphBLAS version of BMLP-IE algorithm
         which performs matrix operations using two input matrices
@@ -157,15 +164,15 @@ def IE(V: Matrix.sparse, R1: Matrix.sparse, R2: Matrix.sparse, T: Matrix.sparse 
         The input V is u rows of 1 x n vectors (a batch of u inputs).
 
     Args:
-        V (Matrix.sparse): A matrix containing u 1 x n vectors.
-        R1 (Matrix.sparse): A k x n boolean matrix.
-        R2 (Matrix.sparse): A k x n boolean matrix.
-        T (Matrix.sparse, optional): A u x k filter applied on R2. Defaults to None.
+        V (Matrix): A matrix containing u 1 x n vectors.
+        R1 (Matrix): A k x n boolean matrix.
+        R2 (Matrix): A k x n boolean matrix.
+        T (Matrix, optional): A u x k filter applied on R2. Defaults to None.
         localised (bool, optional): Use matrices stored in SuiteSparse specific binary file at R1 and R2 locations.
         print_matrix (bool, optional): Print trace of fixpoint computation. Defaults to False.
 
     Returns:
-        Matrix.sparse: V* transitive closure (fixpoint) containing u rows of 1 x n vectors.
+        Matrix: V* transitive closure (fixpoint) containing u rows of 1 x n vectors.
     """
 
     # Localised R1 is assumed transposed to avoid redundant operations

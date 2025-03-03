@@ -1,4 +1,7 @@
-from pygraphblas import Matrix, types, Vector, BOOL
+import graphblas as gb
+from graphblas import Matrix, Vector, Scalar
+from graphblas.dtypes import *
+from graphblas import unary, binary, monoid, semiring
 
 
 # Parse a boolean matrix from Prolog version of BMLP which has integers as rows
@@ -30,7 +33,7 @@ def integer_to_binary_code(n):
 
 
 # Write graphBLAS matrix as a set of integers in a prolog file
-def boolean_matrix_to_integers(matrix: Matrix.sparse, name, path):
+def boolean_matrix_to_integers(matrix: Matrix, name, path):
 
     with open(path, 'w') as prolog:
         for i in range(matrix.nrows):
@@ -53,9 +56,9 @@ def integers_to_boolean_matrix(path, is_squared=False):
 
     if is_squared:
         dim = max(nrows, ncols)
-        matrix = Matrix.sparse(BOOL, dim, dim)
+        matrix = Matrix(BOOL, dim, dim)
     else:
-        matrix = Matrix.sparse(BOOL, nrows, ncols)
+        matrix = Matrix(BOOL, nrows, ncols)
 
     for row in range(len(bitcodes)):
         for col in range(len(bitcodes[row])):

@@ -1,10 +1,27 @@
-import pygraphblas as gb
 import unittest
-from core import matrix, utils
-from learn import predicate, task, generator, learn
+from bmlp.core import matrix, utils
+from bmlp.learn import predicate, task, generator, learn
 
 
 class BMLPTests(unittest.TestCase):
+
+    def test_create_matrix(self):
+
+        # Create a square adjacency matrix using BOOL type
+        a = matrix.new_matrix(5, 5)
+
+        # Insert edges into the adjacency matrix
+        a[0, 1] << True
+        a[1, 2] << True
+        a[2, 3] << True
+        a[3, 0] << True
+        a[4, 4] << True
+
+        self.assertEqual(a[0, 1], True)
+        self.assertEqual(a[1, 2], True)
+        self.assertEqual(a[2, 3], True)
+        self.assertEqual(a[3, 0], True)
+        self.assertEqual(a[4, 4], True)
 
     def test_load_pl(self):
 

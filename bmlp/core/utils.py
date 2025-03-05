@@ -32,9 +32,8 @@ def integer_to_binary_code(n):
     return [n >> i & 1 for i in range(0, len)], len
 
 
-# Write graphBLAS matrix as a set of integers in a prolog file
-def boolean_matrix_to_integers(matrix: Matrix, name, path):
-
+def boolean_matrix_to_integers(matrix: Matrix, name='abdm', path='cm.pl'):
+    cm = []
     with open(path, 'w') as prolog:
         for i in range(matrix.nrows):
 
@@ -46,6 +45,8 @@ def boolean_matrix_to_integers(matrix: Matrix, name, path):
                 out = (out << 1) | element if element else (out << 1)
 
             prolog.write('%s(%s,%s).\n' % (name, i, out))
+            cm.append(out)
+    return cm
 
 
 # From a path to a prolog file containing a boolean matrix

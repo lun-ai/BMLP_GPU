@@ -1,7 +1,6 @@
 import cupy as cp
 import numpy as np
-import pygraphblas as gb
-from bmlp.Matrix import *
+from bmlp.core import matrix
 import random
 import time
 
@@ -16,7 +15,7 @@ total_time = []
 for i in range(num_reps):
 
     # Create a square adjacency matrix using BOOL type
-    empty_matrix = gb.Matrix.sparse(gb.BOOL, num_nodes, num_nodes)
+    empty_matrix = matrix.new(num_nodes, num_nodes)
     R1 = empty_matrix
 
     # sample edges with edge probability < p
@@ -31,7 +30,7 @@ for i in range(num_reps):
 
     # Run and time the BMLP-RMS module
     start_time = time.time()
-    RMS(R1)
+    matrix.RMS(R1)
     end_time = time.time()
 
     total_time.append(end_time - start_time)

@@ -58,12 +58,14 @@ class Generator:
                 new_pred = unary_op.apply(unary_op, pred, self.syms)
                 if new_pred is None:
                     self.elimination += 1
-                # If input predicates are neither incomplete nor inconsistent
-                elif hash(new_pred) not in cached:
-                    cached[hash(new_pred)] = True
-                    self.new_preds.append(new_pred)
                 else:
-                    self.redundancy += 1
+                    # If input predicates are neither incomplete nor inconsistent
+                    hash = new_pred.hash()
+                    if hash not in cached:
+                        cached[hash] = True
+                        self.new_preds.append(new_pred)
+                    else:
+                        self.redundancy += 1
 
         # Apply binary operators to every matrix and the rest
         for i in range(self.num_new_predicate - 1):
@@ -76,11 +78,13 @@ class Generator:
                     # If input predicates are neither incomplete nor inconsistent
                     if new_pred is None:
                         self.elimination += 1
-                    elif hash(new_pred) not in cached:
-                        cached[hash(new_pred)] = True
-                        self.new_preds.append(new_pred)
                     else:
-                        self.redundancy += 1
+                        hash = new_pred.hash()
+                        if hash not in cached:
+                            cached[hash] = True
+                            self.new_preds.append(new_pred)
+                        else:
+                            self.redundancy += 1
 
         # Check if any of the new predicates are correct
         correct_preds = []

@@ -1,5 +1,6 @@
-import random, time
-import pygraphblas as gb
+import random
+import time
+from bmlp.core import matrix
 
 # An even larer graph
 num_nodes = 5000
@@ -17,7 +18,7 @@ for i in range(num_reps):
     sampled_edges = list(filter(lambda _: random.random() < p, all_edges))
 
     # Create a square adjacency matrix using BOOL type
-    empty_matrix = gb.Matrix.sparse(gb.BOOL, num_nodes, num_nodes)
+    empty_matrix = matrix.new(num_nodes, num_nodes)
     R1 = empty_matrix
 
     # Insert edges into the adjacency matrix

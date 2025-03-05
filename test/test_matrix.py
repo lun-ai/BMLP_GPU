@@ -284,7 +284,7 @@ class TestIO(unittest.TestCase):
         a[0, 1] << True
         a[1, 2] << True
 
-        save_matrix(a, current_dir + "/output.csv")
+        save(a, current_dir + "/output.csv")
 
     def test_load_matrix(self):
 
@@ -295,8 +295,8 @@ class TestIO(unittest.TestCase):
         a[0, 1] << True
         a[1, 2] << True
 
-        save_matrix(a, current_dir + "/output.csv")
-        b = load_matrix(current_dir + "/output.csv")
+        save(a, current_dir + "/output.csv")
+        b = load(current_dir + "/output.csv")
 
         self.assertEqual(b[0, 1], True)
         self.assertEqual(b[1, 2], True)

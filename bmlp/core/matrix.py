@@ -13,12 +13,12 @@ import pandas as pd
 
 
 # Save and load a matrix from a DataFrame
-def load_matrix(file_path):
+def load(file_path):
     df = pd.read_csv(file_path)
     return Matrix.from_coo(df['row'].iloc[1:].values, df['col'].iloc[1:].values, True, nrows=df['row'].iloc[0], ncols=df['col'].iloc[0])
 
 
-def save_matrix(matrix, file_path):
+def save(matrix, file_path):
     coo = matrix.to_coo()
 
     df = pd.DataFrame({
@@ -199,8 +199,15 @@ def IE(V: Matrix, R1: Matrix, R2: Matrix, T: Matrix = None,
 
     # Localised R1 is assumed transposed to avoid redundant operations
     if localised:
+
+
+<< << << < HEAD
         R1 = load_matrix(R1)
         R2 = load_matrix(R2)
+== == == =
+        R1 = load(R1)
+        R2 = load(R2)
+>>>>>> > refs/remotes/origin/main
         nrows = R1.ncols
         ncols = max(R1.nrows, R2.ncols)
     # If R1 and R2 are not stored as SuiteSparse binary format

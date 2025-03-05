@@ -311,7 +311,7 @@ class TestIO(unittest.TestCase):
         b = a
 
         # Save this copy into a .pl file and rename the predicate
-        boolean_matrix_to_integers(b, "b", "test/output1.pl")
+        boolean_matrix_to_integers(b, "b", current_dir + "/output1.pl")
 
     def test_run_and_save_pl(self):
 
@@ -323,7 +323,7 @@ class TestIO(unittest.TestCase):
         b = RMS(a)
 
         # Save this copy into a .pl file and rename the predicate
-        boolean_matrix_to_integers(b, "b", "test/output2.pl")
+        boolean_matrix_to_integers(b, "b", current_dir + "/output2.pl")
 
 
 class TestBMLPModules(unittest.TestCase):

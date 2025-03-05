@@ -13,3 +13,4 @@ dependencies:
   - python-graphblas
   - ipykernel
   - pip
+  - tqdm

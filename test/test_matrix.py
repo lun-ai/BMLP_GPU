@@ -1,6 +1,13 @@
 import unittest
 from bmlp.core.matrix import *
 from bmlp.core.utils import *
+import os
+
+# Get absolute path of the current file
+current_file_path = os.path.abspath(__file__)
+
+# Get directory containing the current file
+current_dir = os.path.dirname(current_file_path)
 
 
 class TestCoreMatrix(unittest.TestCase):
@@ -272,7 +279,7 @@ class TestIO(unittest.TestCase):
 
         # Test Prolog to BMLP-GPU conversion
         # Load a .pl file containing rows of a boolean matrix
-        a = integers_to_boolean_matrix("test/int_matrix.pl")
+        a = integers_to_boolean_matrix(current_dir + "/int_matrix.pl")
 
         self.assertEqual(a[0, 1], True)
         self.assertEqual(a[1, 2], True)
@@ -285,7 +292,7 @@ class TestIO(unittest.TestCase):
         # Test Prolog to BMLP-GPU conversion
         # Load a .pl file containing rows of a boolean matrix
         a = integers_to_boolean_matrix(
-            "test/int_matrix.pl", is_squared=True)
+            current_dir + "/int_matrix.pl", is_squared=True)
 
         self.assertEqual(a[0, 1], True)
         self.assertEqual(a[1, 2], True)
@@ -298,7 +305,7 @@ class TestIO(unittest.TestCase):
 
         # Test Prolog to BMLP-GPU conversion
         # Load a .pl file containing rows of a boolean matrix
-        a = integers_to_boolean_matrix("test/int_matrix.pl")
+        a = integers_to_boolean_matrix(current_dir + "/int_matrix.pl")
 
         # Create a copy of this boolean matrix
         b = a
@@ -310,7 +317,7 @@ class TestIO(unittest.TestCase):
 
         # Test Prolog to BMLP-GPU conversion
         # Load a .pl file containing rows of a boolean matrix
-        a = integers_to_boolean_matrix("test/int_matrix.pl")
+        a = integers_to_boolean_matrix(current_dir + "/int_matrix.pl")
 
         # Create a copy of this boolean matrix
         b = RMS(a)

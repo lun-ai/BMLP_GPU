@@ -199,15 +199,8 @@ def IE(V: Matrix, R1: Matrix, R2: Matrix, T: Matrix = None,
 
     # Localised R1 is assumed transposed to avoid redundant operations
     if localised:
-
-
-<< << << < HEAD
-        R1 = load_matrix(R1)
-        R2 = load_matrix(R2)
-== == == =
         R1 = load(R1)
         R2 = load(R2)
->>>>>> > refs/remotes/origin/main
         nrows = R1.ncols
         ncols = max(R1.nrows, R2.ncols)
     # If R1 and R2 are not stored as SuiteSparse binary format

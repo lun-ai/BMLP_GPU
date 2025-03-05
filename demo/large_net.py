@@ -26,8 +26,6 @@ for i in range(num_reps):
 
     print('Matrix created')
 
-    # R1.to_binfile("large")
-
     # Run and time the BMLP-RMS module
     start_time = time.time()
     matrix.RMS(R1)

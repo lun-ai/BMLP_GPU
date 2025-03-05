@@ -5,10 +5,29 @@ import graphblas as gb
 from graphblas import Matrix, Vector, Scalar
 from graphblas import dtypes as types
 from graphblas import unary, binary, monoid, semiring
+import pandas as pd
 
 # Use python wrapper of GraphBLAS on GPU (BLAS - Basic Linear Algebra Subprograms)
 # GraphBLAS supports graph operations via linear algebraic methods (e.g. matrix multiplication) over various semirings
 # Documentation: https://python-graphblas.readthedocs.io/en/stable/index.html
+
+
+# Save and load a matrix from a DataFrame
+def load_matrix(file_path):
+    df = pd.read_csv(file_path)
+    return Matrix.from_coo(df['row'].iloc[1:].values, df['col'].iloc[1:].values, True, nrows=df['row'].iloc[0], ncols=df['col'].iloc[0])
+
+
+def save_matrix(matrix, file_path):
+    coo = matrix.to_coo()
+
+    df = pd.DataFrame({
+        'attribute': ['dim'] + ['elem'] * len(coo[0]),
+        'row': np.insert(coo[0], 0, matrix.nrows),
+        'col': np.insert(coo[1], 0, matrix.ncols)
+    })
+
+    df.to_csv(file_path, index=False)
 
 
 # Multiply two sparse matrices
@@ -180,8 +199,8 @@ def IE(V: Matrix, R1: Matrix, R2: Matrix, T: Matrix = None,
 
     # Localised R1 is assumed transposed to avoid redundant operations
     if localised:
-        R1 = Matrix.from_binfile(R1)
-        R2 = Matrix.from_binfile(R2)
+        R1 = load_matrix(R1)
+        R2 = load_matrix(R2)
         nrows = R1.ncols
         ncols = max(R1.nrows, R2.ncols)
     # If R1 and R2 are not stored as SuiteSparse binary format

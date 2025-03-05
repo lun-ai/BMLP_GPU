@@ -275,6 +275,39 @@ class TestIO(unittest.TestCase):
         self.assertEqual(a[3, 0], True)
         self.assertEqual(a[4, 4], True)
 
+    def test_save_matrix(self):
+
+        # Create a square adjacency matrix using BOOL type
+        a = new(3, 3)
+
+        # Insert edges into the adjacency matrix
+        a[0, 1] << True
+        a[1, 2] << True
+
+        save(a, current_dir + "/output.csv")
+
+    def test_load_matrix(self):
+
+        # Create a square adjacency matrix using BOOL type
+        a = new(3, 3)
+
+        # Insert edges into the adjacency matrix
+        a[0, 1] << True
+        a[1, 2] << True
+
+        save(a, current_dir + "/output.csv")
+        b = load(current_dir + "/output.csv")
+
+        self.assertEqual(b[0, 1], True)
+        self.assertEqual(b[1, 2], True)
+        self.assertNotEqual(b[0, 0], True)
+        self.assertNotEqual(b[0, 2], True)
+        self.assertNotEqual(b[1, 1], True)
+        self.assertNotEqual(b[1, 0], True)
+        self.assertNotEqual(b[2, 0], True)
+        self.assertNotEqual(b[2, 1], True)
+        self.assertNotEqual(b[2, 2], True)
+
     def test_load_pl(self):
 
         # Test Prolog to BMLP-GPU conversion

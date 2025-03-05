@@ -1,8 +1,9 @@
 from .predicate import *
+from graphblas import Matrix
 
 
 class Task:
-    def __init__(self, pos: Matrix.sparse, neg: Matrix.sparse):
+    def __init__(self, pos: Matrix, neg: Matrix):
         """
         Initialize Task with positive and negative examples
 
@@ -13,8 +14,8 @@ class Task:
         self.pos = pos
         self.neg = neg
         # Number of positive and negative examples
-        self.PN = pos.reduce_int()
-        self.NN = neg.reduce_int()
+        self.PN = len(pos.to_coo()[0])
+        self.NN = len(neg.to_coo()[0])
 
     # def validate(self):
     #     """Validate that all parameters are valid matrices"""
@@ -54,10 +55,10 @@ class Task:
 
     # Compute the coverage of invented predicates of positive and negative examples
     def pos_coverage(self, pred):
-        return (pred.get_matrix() * self.pos).reduce_int() / self.PN if self.PN != 0 else 0
+        return len((pred.get_matrix() * self.pos).to_coo()[0]) / self.PN if self.PN != 0 else 0
 
     def neg_coverage(self, pred):
-        return (pred.get_matrix() * self.neg).reduce_int() / self.NN if self.NN != 0 else 0
+        return len((pred.get_matrix() * self.neg).to_coo()[0]) / self.NN if self.NN != 0 else 0
 
     def check_correctness(self, pred):
         """Determine if the prediction is correct based on coverage metrics.

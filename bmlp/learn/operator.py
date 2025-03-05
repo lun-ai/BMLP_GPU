@@ -34,7 +34,7 @@ class BinaryOp(Operator):
 class InvOp(UnaryOp):
     def apply(self, pred: Predicate, syms: Symbols) -> Predicate:
         new_sym = syms.next_symbol()
-        return Predicate(pred.get_matrix().T, new_sym,
+        return Predicate(transpose(pred.get_matrix()), new_sym,
                          expr=f'{new_sym}(X, Y) :- {pred.get_name()}(Y, X).\n{pred}')
 
 
@@ -56,7 +56,7 @@ class ConjOp(BinaryOp):
         # Overly general, specialisations have no benefit to either predicate
         if pred1.get_negative_score() == 1 or pred2.get_negative_score() == 1:
             return None
-        return Predicate(pred1.get_matrix() * pred2.get_matrix(), new_sym,
+        return Predicate(intersection(pred1.get_matrix(), pred2.get_matrix()), new_sym,
                          expr=f'{new_sym}(X, Y) :- {pred1.get_name()}(X, Y), {pred2.get_name()}(X, Y).\n{pred1}{pred2}')
 
 
@@ -70,7 +70,7 @@ class DisjOp(BinaryOp):
         # Overly specific, generalisations have no benefit to either predicate
         if pred1.get_positive_score() == 0 or pred2.get_positive_score() == 0:
             return None
-        return Predicate(pred1.get_matrix() + pred2.get_matrix(), new_sym,
+        return Predicate(add(pred1.get_matrix(), pred2.get_matrix()), new_sym,
                          expr=f"{new_sym}(X, Y) :- {pred1.get_name()}(X, Y).\n{new_sym}(X, Y) :- {pred2.get_name()}(X, Y).\n{pred1}{pred2}")
 
 
@@ -113,19 +113,19 @@ class RecursOpSelf(UnaryOp):
 class ChainOp1(BinaryOp):
     def apply(self, pred1: Predicate, pred2: Predicate, syms: Symbols) -> Predicate:
         new_sym = syms.next_symbol()
-        return Predicate(pred1.get_matrix() @ pred2.get_matrix(), new_sym,
+        return Predicate(mul(pred1.get_matrix(), pred2.get_matrix()), new_sym,
                          expr=f"{new_sym}(X, Y) :- {pred1.get_name()}(X, Z), {pred2.get_name()}(Z, Y).\n{pred1}{pred2}")
 
 
 class ChainOp2(BinaryOp):
     def apply(self, pred1: Predicate, pred2: Predicate, syms: Symbols) -> Predicate:
         new_sym = syms.next_symbol()
-        return Predicate(pred2.get_matrix() @ pred1.get_matrix(), new_sym,
+        return Predicate(mul(pred2.get_matrix(), pred1.get_matrix()), new_sym,
                          expr=f"{new_sym}(X, Y) :- {pred2.get_name()}(X, Z), {pred1.get_name()}(Z, Y).\n{pred1}{pred2}")
 
 
 class ChainOpSelf(UnaryOp):
     def apply(self, pred: Predicate, syms: Symbols) -> Predicate:
         new_sym = syms.next_symbol()
-        return Predicate(pred.get_matrix() @ pred.get_matrix(), new_sym,
+        return Predicate(mul(pred.get_matrix(), pred.get_matrix()), new_sym,
                          expr=f"{new_sym}(X, Y) :- {pred.get_name()}(X, Z), {pred.get_name()}(Z, Y).\n{pred}")

@@ -1,10 +1,10 @@
-from core.matrix import *
-from core.utils import *
+from ..core.matrix import *
+from ..core.utils import *
 from cudf import DataFrame
 
 
 class Predicate:
-    def __init__(self, matrix: Matrix.sparse, name: str, pos_score: float = np.inf, neg_score: float = -np.inf, expr: str = ''):
+    def __init__(self, matrix: Matrix, name: str, pos_score: float = np.inf, neg_score: float = -np.inf, expr: str = ''):
         """
         Initialize a Predicate object
 
@@ -74,7 +74,7 @@ class Predicate:
         """Detailed representation"""
         return f"Predicate(\nmatrix=\n{self.matrix}, \nname={self.name}, scores=({self.pos_score}, {self.neg_score}))"
 
-    def __hash__(self) -> int:
+    def hash(self) -> int:
         """Calculate the hash value for the instance.
 
         This method generates a hash value by converting the matrix to a list and summing the hash values of its elements. 
@@ -83,7 +83,8 @@ class Predicate:
         Returns:
             int: The computed hash value of the matrix.
         """
-        return int(DataFrame(self.matrix.to_lists()).hash_values().sum())
+        coo = self.matrix.to_coo(values=False)
+        return int(DataFrame(coo[:-1]).hash_values().sum())
 
     # def __hash__(self):
     #     """

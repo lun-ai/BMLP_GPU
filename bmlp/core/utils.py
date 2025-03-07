@@ -5,6 +5,7 @@ from graphblas import unary, binary, monoid, semiring
 
 
 # Parse a boolean matrix from Prolog version of BMLP which has integers as rows
+# return a list of bitcodes arrays, the number of facts and the maximum length of the bitcodes
 def parse_prolog_binary_codes(path):
 
     codes = []

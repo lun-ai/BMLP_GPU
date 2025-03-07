@@ -358,6 +358,15 @@ class TestIO(unittest.TestCase):
         # Save this copy into a .pl file and rename the predicate
         boolean_matrix_to_integers(b, "b", current_dir + "/output2.pl")
 
+    def test_convert_lists_to_matrix(self):
+        lists = [[0, 1], [0, 1]]
+        a = lists_to_matrix(lists)
+
+        self.assertEqual(a[0, 1], True)
+        self.assertEqual(a[1, 1], True)
+        self.assertNotEqual(a[0, 0], True)
+        self.assertNotEqual(a[1, 0], True)
+
 
 class TestBMLPModules(unittest.TestCase):
 

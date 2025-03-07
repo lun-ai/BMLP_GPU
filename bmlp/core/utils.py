@@ -68,3 +68,9 @@ def integers_to_boolean_matrix(path, is_squared=False):
                 matrix[row, col] = True
 
     return matrix
+
+
+# From a python list of lists to a graphBLAS matrix
+def lists_to_matrix(lists: list[list[int]]):
+    matrix = Matrix.from_dense(lists, missing_value=0)
+    return matrix

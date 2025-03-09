@@ -14,3 +14,4 @@ dependencies:
   - ipykernel
   - pip
   - tqdm
+  - scikit-learn

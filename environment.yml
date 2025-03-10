@@ -14,4 +14,6 @@ dependencies:
   - ipykernel
   - pip
   - tqdm
+  # for data analysis and visualisation
   - scikit-learn
+  - matplotlib

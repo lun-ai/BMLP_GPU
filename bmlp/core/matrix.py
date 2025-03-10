@@ -224,15 +224,15 @@ def IE(V: Matrix, R1: Matrix, R2: Matrix, T: Matrix = None,
     # Need to resize matrices to be compatible due to leading zeros
     # Then Pad the input matrix with default 'False' values
     ninputs = V.nrows
-    V = resize(V, ninputs, ncols)
+    V_ = resize(V, ninputs, ncols)
 
     # When a filter on R2 is applied, negate it to find which R2 rows to keep
     if T is not None:
-        T = resize(T, ninputs, nrows)
-        T = negate(T)
+        T_ = resize(T, ninputs, nrows)
+        T_ = negate(T_, inplace=True)
 
     SNum = 0
-    V_ = new(ninputs, nrows)
+    V__ = new(ninputs, nrows)
     res = new(ninputs, ncols)
     # total_time = 0
     while True:
@@ -244,22 +244,24 @@ def IE(V: Matrix, R1: Matrix, R2: Matrix, T: Matrix = None,
         # Negate the V matrix while keeping it sparse to find all R1 rows that are not subsets
         # This can be done with sparse matrix mul without require union matrix-matrix mul
         # start_time = time.time()
-        V_ << mul(negate(V), R1, inplace=True)
-        V_ << negate(V_, inplace=True)
+        # V_ << negate(V_, inplace=True)
+        V__ << mul(negate(V_), R1, inplace=True)
+        V__ << negate(V__, inplace=True)
         # total_time += time.time() - start_time
 
         # Multiply with rows in R2 filtered by T and update
         if T is None:
-            res << add(mul(V_, R2, inplace=True), V, inplace=True)
+            res << add(mul(V__, R2, inplace=True), V_, inplace=True)
         else:
-            V_ << intersection(V_, T, inplace=True)
-            res << add(mul(V_, R2, inplace=True), V, inplace=True)
+            V__ << intersection(V__, T_, inplace=True)
+            res << add(mul(V__, R2, inplace=True), V_, inplace=True)
 
         if print_matrix:
             print('V* = \n' + str(res) + '\n')
-        if res.isequal(V):
+        if res.isequal(V_):
             break
-        V << res
+        V_ << res
+        res.clear()
         SNum += 1
 
     # print(total_time)

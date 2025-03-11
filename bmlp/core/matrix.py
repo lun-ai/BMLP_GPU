@@ -6,6 +6,8 @@ from graphblas import Matrix, Vector, Scalar
 from graphblas import dtypes as types
 from graphblas import unary, binary, monoid, semiring
 import pandas as pd
+import psutil
+from tqdm import tqdm
 
 # Use python wrapper of GraphBLAS on GPU (BLAS - Basic Linear Algebra Subprograms)
 # GraphBLAS supports graph operations via linear algebraic methods (e.g. matrix multiplication) over various semirings
@@ -54,8 +56,8 @@ def add(M1: Matrix, M2: Matrix, inplace=False):
 # Find the intersection between two sparse matrices
 def intersection(M1: Matrix, M2: Matrix, inplace=False):
     if inplace:
-        return M1.ewise_union(M2, op=gb.binary.min, left_default=False, right_default=False).select('==', True)
-    return M1.ewise_union(M2, op=gb.binary.min, left_default=False, right_default=False).select('==', True).new()
+        return M1.ewise_union(M2, op=gb.binary.land, left_default=False, right_default=False).select('==', True)
+    return M1.ewise_union(M2, op=gb.binary.land, left_default=False, right_default=False).select('==', True).new()
 
 
 # Transpose a sparse matrix
@@ -234,37 +236,48 @@ def IE(V: Matrix, R1: Matrix, R2: Matrix, T: Matrix = None,
     SNum = 0
     V__ = new(ninputs, nrows)
     res = new(ninputs, ncols)
-    # total_time = 0
-    while True:
-        # Find all rows that are subsets of V
-        # Would need R2[i,j] -> R1[i,j] if matrix-matrix mul
-        # can be performed on the element union
+    V_neg = new(ninputs, ncols)
+    M = new(ninputs, ncols)
+    with tqdm(total=100, desc='cpu%', position=1) as cpubar, tqdm(total=100, desc='ram%', position=0) as rambar:
+        while True:
+            # rambar.n = psutil.virtual_memory().percent
+            # cpubar.n = psutil.cpu_percent()
+            # rambar.refresh()
+            # cpubar.refresh()
+            # Find all rows that are subsets of V
+            # Would need R2[i,j] -> R1[i,j] if matrix-matrix mul
+            # can be performed on the element union
 
-        # A sparse matrix workaround
-        # Negate the V matrix while keeping it sparse to find all R1 rows that are not subsets
-        # This can be done with sparse matrix mul without require union matrix-matrix mul
-        # start_time = time.time()
-        # V_ << negate(V_, inplace=True)
-        V__ << mul(negate(V_), R1, inplace=True)
-        V__ << negate(V__, inplace=True)
-        # total_time += time.time() - start_time
+            # A sparse matrix workaround
+            # Negate the V matrix while keeping it sparse to find all R1 rows that are not subsets
+            # This can be done with sparse matrix mul without require union matrix-matrix mul
+            # print('Enter 1')
+            V_neg << negate(V_, inplace=True)
+            V__ << mul(V_neg, R1, inplace=True)
+            V__ << negate(V__, inplace=True)
+            print(V__.nvals)
+            print('Exit 1')
 
-        # Multiply with rows in R2 filtered by T and update
-        if T is None:
-            res << add(mul(V__, R2, inplace=True), V_, inplace=True)
-        else:
-            V__ << intersection(V__, T_, inplace=True)
-            res << add(mul(V__, R2, inplace=True), V_, inplace=True)
+            # Multiply with rows in R2 filtered by T and update
+            if T is None:
+                M << gb.semiring.land_lor(V__ @ R2)
+                res << gb.binary.lor(M | V_)
+            else:
+                V__ << gb.binary.land(V__ & T_)
+                print(V__.nvals)
+                M << gb.semiring.land_lor(V__ @ R2)
+                res << gb.binary.lor(M | V_)
 
-        if print_matrix:
-            print('V* = \n' + str(res) + '\n')
-        if res.isequal(V_):
-            break
-        V_ << res
-        res.clear()
-        SNum += 1
-
-    # print(total_time)
+            if print_matrix:
+                print('V* = \n' + str(res) + '\n')
+            if res.isequal(V_):
+                break
+            V_ << res
+            print('Exit 2')
+            res.clear()
+            M.clear()
+            V__.clear()
+            SNum += 1
 
     if print_matrix:
         print('V* = \n' + str(res) + '\n')

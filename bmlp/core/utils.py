@@ -1,7 +1,5 @@
-import graphblas as gb
-from graphblas import Matrix, Vector, Scalar
+from graphblas import Matrix
 from graphblas.dtypes import *
-from graphblas import unary, binary, monoid, semiring
 
 
 # Parse a boolean matrix from Prolog version of BMLP which has integers as rows

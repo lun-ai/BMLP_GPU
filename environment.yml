@@ -2,18 +2,22 @@ name: bmlp
 channels:
   - nvidia 
   - conda-forge
-  - rapidsai
-  - defaults
+  # - pytorch
 
 dependencies:
   - python
+  - pip
   - numpy
-  - cudf
-  - cudatoolkit
+  - pandas
   - python-graphblas
   - ipykernel
-  - pip
   - tqdm
-  # for data analysis and visualisation
+  ## for data analysis and visualisation
   - scikit-learn
   - matplotlib
+  ## Use conda install pytorch=*=*cuda* cudatoolkit -c pytorch 
+  ## for faster conda solving time
+  # - cudatoolkit
+  # - pytorch=*=*cuda*
+  ## Optional
+  # - cudf

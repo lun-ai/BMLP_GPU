@@ -5,142 +5,168 @@ import os
 from bmlp.core.tensor import *
 
 
+# Get absolute path of the current file
+current_file_path = os.path.abspath(__file__)
+
+# Get directory containing the current file
+current_dir = os.path.dirname(current_file_path)
+
+
 class TestCoreTorchMatrix(unittest.TestCase):
 
-    # def test_mul(self):
-    #     # Create a square adjacency matrix
-    #     a = new(3, 3)
-    #     b = new(3, 3)
+    def test_mul(self):
+        # Create a square adjacency matrix
+        a = torch.tensor(
+            [[False, True, False],
+             [False, False, True],
+             [False, False, False]]
+        )
+        b = torch.tensor(
+            [[False, True, False],
+             [False, False, True],
+             [False, False, False]]
+        )
 
-    #     # Convert indices for PyTorch format
-    #     a_indices = torch.tensor([[0, 1]], dtype=torch.long)
-    #     a_values = torch.tensor([True], dtype=torch.bool)
-    #     a = torch.sparse_coo_tensor(a_indices, a_values, (3, 3))
+        c = mul(a, b)
 
-    #     b_indices = torch.tensor([[1, 2]], dtype=torch.long)
-    #     b_values = torch.tensor([True], dtype=torch.bool)
-    #     b = torch.sparse_coo_tensor(b_indices, b_values, (3, 3))
+        # Test with to_dense() for easier comparison
+        self.assertTrue(c.to_dense()[0][2].item())
+        self.assertFalse(c.to_dense()[1][2].item())
+        self.assertFalse(c.to_dense()[0][1].item())
 
-    #     c = mul(a, b)
+    def test_square(self):
+        # Create a square adjacency matrix
+        a = torch.tensor(
+            [[False, True, False],
+             [False, False, True],
+             [False, False, False]]
+        )
 
-    #     # Test with to_dense() for easier comparison
-    #     self.assertTrue(c.to_dense()[0, 2])
-    #     self.assertFalse(c.to_dense()[1, 2])
-    #     self.assertFalse(c.to_dense()[0, 1])
+        b = square(a)
 
-    # def test_square(self):
-    #     # Create a square adjacency matrix
-    #     a_indices = torch.tensor([[0, 1], [1, 2]], dtype=torch.long)
-    #     a_values = torch.tensor([True, True], dtype=torch.bool)
-    #     a = torch.sparse_coo_tensor(a_indices, a_values, (3, 3))
-
-    #     b = square(a)
-        
-    #     self.assertTrue(b.to_dense()[0, 2])
-    #     self.assertFalse(b.to_dense()[1, 2])
-    #     self.assertFalse(b.to_dense()[0, 1])
+        self.assertTrue(b.to_dense()[0][2].item())
+        self.assertFalse(b.to_dense()[1][2].item())
+        self.assertFalse(b.to_dense()[0][1].item())
 
     def test_add(self):
         # Create square adjacency matrices
-        a_indices = [[0],[1]]
-        a_values = [True]
-        a = torch.sparse_coo_tensor(a_indices, a_values, (3, 3)).to_dense()
-
-        b_indices = [[0, 1], [1, 2]]
-        b_values = [True, True]
-        b = torch.sparse_coo_tensor(b_indices, b_values, (3, 3)).to_dense()
+        a = torch.tensor(
+            [[False, True, False],
+             [False, False, True],
+             [False, False, False]]
+        )
+        b = torch.tensor(
+            [[False, True, True],
+             [False, False, True],
+             [False, False, False]]
+        )
 
         c = add(a, b)
 
         self.assertTrue(c.to_dense()[0][1].item())
+        self.assertTrue(c.to_dense()[0][2].item())
         self.assertTrue(c.to_dense()[1][2].item())
-        self.assertFalse(c.to_dense()[0][2].item())
+        self.assertFalse(c.to_dense()[0][0].item())
+        self.assertFalse(c.to_dense()[1][0].item())
+        self.assertFalse(c.to_dense()[1][1].item())
 
-    # def test_intersection(self):
-    #     # Create square adjacency matrices
-    #     a_indices = torch.tensor([[0, 1]], dtype=torch.long)
-    #     a_values = torch.tensor([True], dtype=torch.bool)
-    #     a = torch.sparse_coo_tensor(a_indices, a_values, (3, 3))
+    def test_intersection(self):
+        # Create square adjacency matrices
+        a = torch.tensor(
+            [[False, True, False],
+             [False, False, True],
+             [False, False, False]]
+        )
+        b = torch.tensor(
+            [[False, True, True],
+             [False, False, True],
+             [False, False, False]]
+        )
 
-    #     b_indices = torch.tensor([[0, 1], [1, 2]], dtype=torch.long)
-    #     b_values = torch.tensor([True, True], dtype=torch.bool)
-    #     b = torch.sparse_coo_tensor(b_indices, b_values, (3, 3))
+        c = intersection(a, b)
 
-    #     c = intersection(a, b)
+        self.assertTrue(c.to_dense()[0, 1])
+        self.assertTrue(c.to_dense()[1, 2])
+        self.assertFalse(c.to_dense()[0, 2])
 
-    #     self.assertTrue(c.to_dense()[0, 1])
-    #     self.assertFalse(c.to_dense()[1, 2])
+    def test_transpose(self):
+        # Create a square adjacency matrix
+        a_indices = torch.tensor([[0, 1], [1, 2]], dtype=torch.long)
+        a_values = torch.tensor([True, True], dtype=torch.bool)
+        a = torch.sparse_coo_tensor(a_indices, a_values, (3, 3))
 
-    # def test_transpose(self):
-    #     # Create a square adjacency matrix
-    #     a_indices = torch.tensor([[0, 1], [1, 2]], dtype=torch.long)
-    #     a_values = torch.tensor([True, True], dtype=torch.bool)
-    #     a = torch.sparse_coo_tensor(a_indices, a_values, (3, 3))
+        b = transpose(a)
 
-    #     b = transpose(a)
+        self.assertTrue(b.to_dense()[1][0].item())
+        self.assertTrue(b.to_dense()[2][1].item())
+        self.assertFalse(b.to_dense()[0][1].item())
+        self.assertFalse(b.to_dense()[1][2].item())
 
-    #     self.assertTrue(b.to_dense()[1, 0])
-    #     self.assertTrue(b.to_dense()[2, 1])
-    #     self.assertFalse(b.to_dense()[0, 1])
-    #     self.assertFalse(b.to_dense()[1, 2])
+    def test_negate(self):
+        # Create a square adjacency matrix
+        a = torch.tensor(
+            [[False, True, False],
+             [False, False, True],
+             [False, False, False]]
+        )
 
-    # def test_negate(self):
-    #     # Create a square adjacency matrix
-    #     a_indices = torch.tensor([[0, 1], [1, 1]], dtype=torch.long)
-    #     a_values = torch.tensor([True, True], dtype=torch.bool)
-    #     a = torch.sparse_coo_tensor(a_indices, a_values, (2, 2))
+        b = negate(a)
 
-    #     b = negate(a)
-        
-    #     self.assertFalse(b.to_dense()[0, 1])
-    #     self.assertFalse(b.to_dense()[1, 1])
-    #     self.assertTrue(b.to_dense()[0, 0])
-    #     self.assertTrue(b.to_dense()[1, 0])
+        self.assertFalse(b.to_dense()[0][1].item())
+        self.assertFalse(b.to_dense()[1][2].item())
+        self.assertTrue(b.to_dense()[0][0].item())
+        self.assertTrue(b.to_dense()[0][2].item())
+        self.assertTrue(b.to_dense()[1][0].item())
+        self.assertTrue(b.to_dense()[1][1].item())
+        self.assertTrue(b.to_dense()[2][0].item())
+        self.assertTrue(b.to_dense()[2][1].item())
+        self.assertTrue(b.to_dense()[2][2].item())
 
-    # def test_identity(self):
-    #     b = identity(2)
-        
-    #     self.assertTrue(b.to_dense()[0, 0])
-    #     self.assertTrue(b.to_dense()[1, 1])
-    #     self.assertFalse(b.to_dense()[0, 1])
-    #     self.assertFalse(b.to_dense()[1, 0])
+    def test_identity(self):
+        b = identity(2)
 
-    # def test_resize(self):
-    #     # Create a square adjacency matrix
-    #     a_indices = torch.tensor([[0, 1]], dtype=torch.long)
-    #     a_values = torch.tensor([True], dtype=torch.bool)
-    #     a = torch.sparse_coo_tensor(a_indices, a_values, (2, 2))
+        self.assertTrue(b.to_dense()[0][0].item())
+        self.assertTrue(b.to_dense()[1][1].item())
+        self.assertFalse(b.to_dense()[0][1].item())
+        self.assertFalse(b.to_dense()[1][0].item())
 
-    #     b = resize(a, 6, 6)
-        
-    #     # Convert to dense for indexing
-    #     b_dense = b.to_dense()
-    #     b_dense[5, 5] = True
-    #     # Convert back to sparse
-    #     b = b_dense.to_sparse()
+    def test_resize(self):
+        # Create a square adjacency matrix
+        a = torch.tensor(
+            [[False, True, False],
+             [False, False, True],
+             [False, False, False]]
+        )
 
-    #     self.assertTrue(b.to_dense()[0, 1])
-    #     self.assertFalse(b.to_dense()[1, 2])
-    #     self.assertFalse(b.to_dense()[2, 3])
-    #     self.assertFalse(b.to_dense()[3, 0])
-    #     self.assertFalse(b.to_dense()[4, 4])
-    #     self.assertTrue(b.to_dense()[5, 5])
+        b = resize(a, 6, 6)
+        b[5][5] = True
+
+        self.assertTrue(b.to_dense()[0][1].item())
+        self.assertTrue(b.to_dense()[1][2].item())
+        self.assertFalse(b.to_dense()[0][0].item())
+        self.assertFalse(b.to_dense()[0][2].item())
+        self.assertFalse(b.to_dense()[1][0].item())
+        self.assertFalse(b.to_dense()[1][1].item())
+        self.assertFalse(b.to_dense()[2][3].item())
+        self.assertFalse(b.to_dense()[3][0].item())
+        self.assertFalse(b.to_dense()[4][4].item())
+        self.assertTrue(b.to_dense()[5][5].item())
 
 
 class TestIOTorch(unittest.TestCase):
 
     def test_save_load_matrix(self):
         # Create a square adjacency matrix
-        a_indices = [[0, 1], [1, 2]]
-        a_values = [True, True]
-        a = torch.sparse_coo_tensor(a_indices, a_values, (3, 3))
+        a = torch.tensor([[False, True, False],
+                          [False, False, True],
+                          [False, False, False]])
 
         # Test save functionality
         save(a, current_dir + "/output_torch.csv")
-        
+
         # Test load functionality
         b = load(current_dir + "/output_torch.csv")
-        
+
         self.assertTrue(b.to_dense()[0][1].item())
         self.assertTrue(b.to_dense()[1][2].item())
         self.assertFalse(b.to_dense()[0][0].item())
@@ -165,7 +191,7 @@ class TestIOTorch(unittest.TestCase):
 
     #     # Compute p0 = p1 * p2 * p3
     #     p0 = mul(mul(p1, p2), p3)
-        
+
     #     self.assertTrue(p0.to_dense()[0, 3])
     #     self.assertFalse((p0.to_dense()[1:, :] != 0).any())
 
@@ -179,15 +205,15 @@ class TestIOTorch(unittest.TestCase):
     #     R1 = torch.sparse_coo_tensor(indices, values, (num_nodes, num_nodes))
 
     #     res = RMS(R1)
-        
+
     #     # Check all expected connections in the transitive closure
     #     expected_edges = [
-    #         (0, 1), (0, 2), (0, 3), (0, 4), 
-    #         (1, 2), (1, 3), (1, 4), 
-    #         (2, 3), (2, 4), 
+    #         (0, 1), (0, 2), (0, 3), (0, 4),
+    #         (1, 2), (1, 3), (1, 4),
+    #         (2, 3), (2, 4),
     #         (3, 4)
     #     ]
-        
+
     #     for src, dst in expected_edges:
     #         self.assertTrue(res.to_dense()[src, dst])
 
@@ -206,7 +232,7 @@ class TestIOTorch(unittest.TestCase):
     #     V = torch.sparse_coo_tensor(V_indices, V_values, (num_nodes,))
 
     #     res = SMP(V, R1)
-        
+
     #     # Node 3 should reach nodes 0, 1, 2, 3 (not 4)
     #     res_dense = res.to_dense()
     #     for i in range(4):

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 __author__ = "Lun Ai"
-__version__ = "v0.3.0"
+__version__ = "v0.4.0"
 
 setup(name='bmlp',
       author=__author__,

@@ -3,8 +3,13 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
+torch.set_default_device('cuda')
+torch.set_default_dtype(torch.float16)
 
-GPU_DEVICE = torch.cuda.current_device()
+GPU_DEVICE = f'cuda:{torch.cuda.current_device()}'
+# Use float16 for faster computation on GPU
+# Values above 0.0 are considered True, 0.0 is False
+D_TYPE = torch.float16
 
 
 # Save and load functions
@@ -16,20 +21,17 @@ def load(file_path):
 
     # Extract indices and values
     indices = torch.tensor([list(df['row'].iloc[1:].values), list(
-        df['col'].iloc[1:].values)], dtype=torch.long)
-    values = torch.ones(indices.shape[1], dtype=torch.bool)
+        df['col'].iloc[1:].values)])
+    values = torch.ones(indices.shape[1])
 
     # Create tensor
     return torch.sparse_coo_tensor(indices, values, (nrows, ncols)).to_dense()
 
 
 def save(matrix, file_path):
-    """Save PyTorch sparse tensor to CSV file"""
-    # Convert to COO format
-    if not matrix.is_sparse:
-        matrix = matrix.to_sparse()
-
-    coo = matrix.to_sparse_coo().coalesce()
+    """Save PyTorch tensor to CSV file"""
+    # Need to coalesce to avoid duplicate indices and copy to CPU memory first
+    coo = matrix.to_sparse_coo().coalesce().cpu()
     indices = coo.indices()
 
     df = pd.DataFrame({
@@ -44,7 +46,7 @@ def save(matrix, file_path):
 # Matrix operations
 def mul(M1, M2):
     """Boolean matrix multiplication"""
-    return M1 @ M2
+    return torch.clamp(M1 @ M2, min=0.0, max=1.0)
 
 
 def square(M):
@@ -54,7 +56,7 @@ def square(M):
 
 def add(M1, M2):
     """Add two matrices using boolean OR"""
-    return (M1 + M2)
+    return torch.clamp(M1 + M2, min=0.0, max=1.0)
 
 
 def intersection(M1, M2):
@@ -76,12 +78,12 @@ def addI(M):
 def negate(M):
     """Negate a boolean matrix"""
     # Create dense matrix of False values
-    return ~M
+    return torch.ones(M.shape) - torch.clamp(M, max=1.0)
 
 
 def identity(dim):
     """Create identity matrix"""
-    return torch.eye(dim, dtype=torch.bool, device=f'cuda:{GPU_DEVICE}')
+    return torch.eye(dim)
 
 
 def resize(M, nrows, ncols):
@@ -97,41 +99,26 @@ def resize(M, nrows, ncols):
 # Create matrix
 def new(nrows, ncols=None):
     """Create a new sparse matrix"""
+    if ncols is None:
+        return torch.zeros(nrows)
     return torch.zeros(nrows, ncols)
 
 
-def RMS(P1):
+def RMS(P1, P2=None):
     """PyTorch version of BMLP-RMS algorithm"""
 
     # Add identity to the adjacency matrix
-    R = addI(P1)
-
-    # Iteratively compute the transitive closure
-    R_ = square(R)
-    while not torch.equal(R_, R):
-        # R = R x R until no new connections are found
-        R = R_
-        R_ = square(R)
-
-    # Multiply to remove redundant diagonal elements
-    res = mul(R_, P1)
-
-    return res
-
-
-def RMS_query(P1, P2):
-    """PyTorch version of BMLP-RMS algorithm"""
-    # The dimensions of the matrix
     dim = P1.shape[0]
-
-    # Add identity to the adjacency matrix
-    R = add(identity(dim), P2)
+    if P2 is None:
+        R = addI(P1)
+    else:
+        R = add(identity(dim), P2)
 
     # Iteratively compute the transitive closure
     R_ = square(R)
     while not torch.equal(R_, R):
-        # R = R x R until no new connections are found
         R = R_
+        # R = R x R until no new connections are found
         R_ = square(R)
 
     # Multiply to remove redundant diagonal elements
@@ -140,31 +127,24 @@ def RMS_query(P1, P2):
     return res
 
 
-def SMP(V, R1, print_matrix=False):
+def SMP(V, R1):
     """PyTorch version of BMLP-SMP algorithm"""
     # Push the model subset selection into summation
-    V_i = V.clone()
-    V_ = V.clone()
+    V_i = V
+    V_ = add(V_i, mul(V_i, R1))
 
-    while True:
+    while not torch.equal(V_, V_i):
+        V_i = V_
         # Apply vector multiplication to the transitive closure
         V_ = add(V_i, mul(V_i, R1))
-        if print_matrix:
-            print('V* = \n' + str(V_.to_dense()) + '\n')
-        if torch.equal(V_.to_dense(), V_i.to_dense()):
-            break
-        V_i = V_
 
     # Multiply to remove redundant diagonal elements
     res = mul(V_, R1)
 
-    if print_matrix:
-        print('V* = \n' + str(res.to_dense()) + '\n')
-
     return res
 
 
-def IE(V, R1, R2, T=None, localised=False, print_matrix=False):
+def IE(V, R1, R2, T=None, localised=False):
     """PyTorch version of BMLP-IE algorithm"""
     # Process input matrices
     if localised:
@@ -187,46 +167,35 @@ def IE(V, R1, R2, T=None, localised=False, print_matrix=False):
         else:
             raise ValueError('Matrix dimensions do not match')
 
-    # Resize matrices
+    # Resize matrices (avoid dimension mismatch from sparse tensor)
     ninputs = V.shape[0]
     V_ = resize(V, ninputs, ncols)
 
     # Process filter
     if T is not None:
-        T_ = resize(T, ninputs, nrows)
-        T_ = negate(T_)
+        T_ = negate(resize(T, ninputs, nrows))
 
     SNum = 0
     V__ = new(ninputs, nrows)
     res = new(ninputs, ncols)
-    V_neg = new(ninputs, ncols)
-    M = new(ninputs, ncols)
 
     while True:
         # Find all rows that are subsets of V
-        V_neg = negate(V_)
-        V__ = mul(V_neg, R1)
+        V__ = mul(negate(V_), R1)
         V__ = negate(V__)
 
         # Multiply with rows in R2 filtered by T and update
         if T is None:
-            M = mul(V__, R2)
-            res = add(M, V_)
+            res = add(mul(V__, R2), V_)
         else:
             V__ = intersection(V__, T_)
-            M = mul(V__, R2)
-            res = add(M, V_)
+            res = add(mul(V__, R2), V_)
 
-        if print_matrix:
-            print('V* = \n' + str(res.to_dense()) + '\n')
-
-        if torch.equal(res.to_dense(), V_.to_dense()):
+        # Check if the result has changed
+        if torch.equal(res, V_):
             break
 
         V_ = res
         SNum += 1
-
-    if print_matrix:
-        print('V* = \n' + str(res.to_dense()) + '\n')
 
     return res, SNum

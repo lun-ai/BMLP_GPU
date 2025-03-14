@@ -5,7 +5,7 @@ channels:
   # - pytorch
 
 dependencies:
-  - python
+  - python=3.12
   - pip
   - numpy
   - pandas
@@ -19,5 +19,5 @@ dependencies:
   ## for faster conda solving time
   # - cudatoolkit
   # - pytorch=*=*cuda*
-  ## Optional
-  # - cudf
+  ## Use conda install rapids=25.02 -c rapidsai -c conda-forge -c nvidia 
+  # - rapids=25.02

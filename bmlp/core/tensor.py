@@ -25,7 +25,7 @@ def load(file_path):
     values = torch.ones(indices.shape[1])
 
     # Create tensor
-    return torch.sparse_coo_tensor(indices, values, (nrows, ncols)).to_dense()
+    return torch.sparse_coo_tensor(indices, values, (nrows, ncols), dtype=D_TYPE).to_dense()
 
 
 def save(matrix, file_path):
@@ -100,8 +100,8 @@ def resize(M, nrows, ncols):
 def new(nrows, ncols=None):
     """Create a new sparse matrix"""
     if ncols is None:
-        return torch.zeros(nrows)
-    return torch.zeros(nrows, ncols)
+        return torch.zeros(nrows, dtype=D_TYPE)
+    return torch.zeros(nrows, ncols, dtype=D_TYPE)
 
 
 def RMS(P1, P2=None):
